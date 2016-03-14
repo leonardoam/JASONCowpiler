@@ -1,0 +1,45 @@
+{ este é o programa de teste 01 }
+
+program teste01;
+
+types
+	v array integer[100];
+	r record
+		real a, b, c;
+		integer i, j;
+	end;
+
+variables
+	string str;
+	real x;
+
+procedure proc;
+	parameters
+		integer arg;
+		var integer param;
+	begin
+		read arg
+		set param = arg;
+	end;
+
+function func returns integer;
+	parameters
+		integer arg;
+	begin
+		read arg;
+		set arg = arg+2;
+		return (arg)
+	end;
+
+begin
+	read x;
+	if  x > 10 then
+		set x = 10;
+		write x;
+	else
+		write x;
+	endif;
+
+	read str
+	write str;
+end.

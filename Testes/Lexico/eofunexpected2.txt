@@ -1,0 +1,13 @@
+{ este é o programa de teste 06 }
+
+program teste06;
+
+types
+	v array integer[100];
+
+variables
+	string x;
+
+begin
+	set x = "stringliteral; { EOF inesperado - string literal mal formado }
+end.

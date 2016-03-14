@@ -1,0 +1,13 @@
+{ este é o programa de teste 08 }
+
+program teste08;
+
+types
+	v array integer[100];
+
+variables
+	integer x;
+
+begin
+	set x = 1.5.8; { numeral invalido }
+end.

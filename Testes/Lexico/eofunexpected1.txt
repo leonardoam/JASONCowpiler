@@ -1,0 +1,13 @@
+{ este é o programa de teste 05 - comentario nao encerrado (EOF inesperado)
+
+program teste05;
+
+types
+	v array integer[100];
+
+variables
+	integer x;
+
+begin
+	read x;
+end.

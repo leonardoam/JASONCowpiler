@@ -1,0 +1,13 @@
+{ este é o programa de teste 02 }
+
+program teste02;
+
+types
+	v array integer[100];
+
+variables
+	integer xº; { caracter invalido }
+
+begin
+	read xº; { caracter invalido }
+end.
