@@ -1,0 +1,181 @@
+options{IGNORE_CASE = true;}
+/*options{DEBUG_PARSER = true;}*/
+
+PARSER_BEGIN(EJC)
+import java.io.*;
+
+public class EJC{
+    public static void main(String[] args) throws ParseException, TokenMgrError{
+        EJC EJC = new EJC(System.in);
+        try{
+            EJC.start();
+            System.out.println("Sucesso!");
+        }catch (Exception e) {
+            System.out.println("Erro!\n" + e.toString());
+        }
+    }
+}
+
+PARSER_END(EJC)
+
+SKIP : {
+	 " "
+	|  "\t"
+	|  "\n"
+	|  "\r"
+	|  "\r\n"
+	|  <"{" (~["{", "}"])* "}">
+}
+
+/*Operadores*/
+TOKEN:
+{
+    <EOL: "\\n" | "\\r" | "\\r\\n" > |
+    <PLUS: "+"> |
+    <MINUS: "-"> |
+    <DIV: "/"> |
+    <MUL: "*"> |
+	<OR: "\\"> |
+	<AND: "&"> |
+	<NOT: "~"> |
+	<GT: ">"> |
+	<LT: "<"> |
+	<GTE: ">="> |
+	<LTE: "<="> |
+	<EQUAL: "="> |
+	<DIFF: "!"> 
+}
+
+
+/*Separadores e Agrupadores*/
+TOKEN:
+{
+  <LPAR: "(">
+ | <RPAR: ")">
+|	<SEMICOLON: ";">
+|	<COMMA: ",">
+//|	<QUOT: "\""> 
+|	<LSQ_BRACK: "[">
+|	<RSQ_BRACK: "]">
+|	<DOT: "."> 
+}
+
+/*Palavras reservadas e funcoes nativas*/
+TOKEN:
+{
+	<ARRAY: "array">
+	| 	<BEGIN: "begin">
+	| 	<CALL: "call">
+	|	<DO: "do">
+	|	<ELSE: "else">
+	| 	<END: "end">
+	|	<ENDIF: "endif">
+	| 	<ENDUNTIL: "enduntil">
+	| 	<ENDWHILE: "endwhile">
+	| 	<FUNCTION: "function">
+	| 	<IF: "if">
+	| 	<INTEGER: "integer">
+	| 	<PARAMETERS: "parameters">
+	| 	<PROCEDURE: "procedure">
+	| 	<PROGRAM: "program">
+	| 	<READ: "read">
+	| 	<REAL: "real">
+	| 	<RECORD: "record">
+	| 	<RETURN: "return">
+	| 	<RETURNS: "returns">
+	| 	<SET: "set">
+	| 	<STRING: "string">
+	| 	<THEN: "then">
+	| 	<TYPES: "types">
+	| 	<UNTIL: "until">
+	| 	<VAR: "var">
+	| 	<VARIABLES: "variables">
+	|	<WHILE: "while">
+	| 	<WRITE: "write">
+}
+
+/*Numeros, palavras e identificadores*/
+TOKEN:
+{
+	<#DIGIT: ["0"-"9"] > |
+	<#LETTER: "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p"| "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" | "A"| "B"| "C"| "D"| "E"| "F"| "G"| "H"| "I"| "J"| "K"| "L"| "M"| "N"| "O"| "P"| "Q"| "R"| "S"| "T"| "U"| "V"| "W"| "X"| "Y"| "Z"> |
+	<#SYMBOL: " " | "!" | "%" | "&" | "'" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | "\\" | ":" | ";" | "<" | "=" | ">"  | "[" | "]" | "^" | "{" | "|" | "}"> | 
+		
+	<#DIGITS: (<DIGIT>)*> |
+	<#FORCE_DIGITS: <DIGIT>(<DIGIT>)*> |
+	<NUMERIC_LITERAL: <DIGITS> "." <FORCE_DIGITS> | <FORCE_DIGITS>"."<DIGITS>| <FORCE_DIGITS>> |
+	
+	<#CHARACTER: <LETTER> | <DIGIT>> |
+	<IDENTIFIER: <LETTER>(<CHARACTER>)*> |
+	
+	<#ANY_CHARACTER: <LETTER> | <DIGIT> | <SYMBOL>> |
+	<STRING_LITERAL: "\""(<ANY_CHARACTER>)*"\"">
+}
+
+void start():
+{
+	Token t;
+}
+{
+    (
+		t = <EOL> {System.out.printf("@(%d,%d)\t<EOL>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <PLUS>   {System.out.printf("@(%d,%d)\t<PLUS>\t-\t%s\n", t.beginLine, t.beginColumn, t);}  | 
+		t = <MINUS>  {System.out.printf("@(%d,%d)\t<MINUS>\t-\t%s\n", t.beginLine, t.beginColumn, t);}  | 
+		t = <DIV>  {System.out.printf("@(%d,%d)\t<DIV>\t-\t%s\n", t.beginLine, t.beginColumn, t);}  | 
+		t = <MUL>  {System.out.printf("@(%d,%d)\t<MUL>\t-\t%s\n", t.beginLine, t.beginColumn, t);}  | 
+		t = <OR>  {System.out.printf("@(%d,%d)\t<OR>\t-\t%s\n", t.beginLine, t.beginColumn, t);}  |
+		t = <AND>  {System.out.printf("@(%d,%d)\t<AND>\t-\t%s\n", t.beginLine, t.beginColumn, t);}  | 
+		t = <NOT>  {System.out.printf("@(%d,%d)\t<NOT>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <GT> {System.out.printf("@(%d,%d)\t<GT>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <LT> {System.out.printf("@(%d,%d)\t<LT>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <GTE> {System.out.printf("@(%d,%d)\t<GTE>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <LTE> {System.out.printf("@(%d,%d)\t<LTE>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <EQUAL> {System.out.printf("@(%d,%d)\t<EQUAL>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <DIFF> {System.out.printf("@(%d,%d)\t<DIFF>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <LPAR> {System.out.printf("@(%d,%d)\t<LPAR>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <RPAR> {System.out.printf("@(%d,%d)\t<RPAR>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <SEMICOLON> {System.out.printf("@(%d,%d)\t<SEMICOLON>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <COMMA> {System.out.printf("@(%d,%d)\t<COMMA>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+	//	t = <QUOT> {System.out.printf("@(%d,%d)\t<QUOT>\t-\t%s\n", t.beginLine, t.beginColumn, t);} | 
+		t = <LSQ_BRACK> {System.out.printf("@(%d,%d)\t<LSQ_BRACK>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <RSQ_BRACK> {System.out.printf("@(%d,%d)\t<RSQ_BRACK>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <DOT> {System.out.printf("@(%d,%d)\t<DOT>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <ARRAY>  {System.out.printf("@(%d,%d)\t<ARRAY>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <BEGIN>  {System.out.printf("@(%d,%d)\t<BEGIN>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <CALL>  {System.out.printf("@(%d,%d)\t<CALL>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <DO>  {System.out.printf("@(%d,%d)\t<DO>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <ELSE>  {System.out.printf("@(%d,%d)\t<ELSE>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <END>  {System.out.printf("@(%d,%d)\t<END>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <ENDIF>  {System.out.printf("@(%d,%d)\t<ENDIF>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <ENDUNTIL>  {System.out.printf("@(%d,%d)\t<ENDUNTIL>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <ENDWHILE>  {System.out.printf("@(%d,%d)\t<ENDWHILE>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <FUNCTION>  {System.out.printf("@(%d,%d)\t<FUNCTION>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <IF>  {System.out.printf("@(%d,%d)\t<IF>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <INTEGER>  {System.out.printf("@(%d,%d)\t<INTEGER>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <PARAMETERS>  {System.out.printf("@(%d,%d)\t<PARAMETERS>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <PROCEDURE>  {System.out.printf("@(%d,%d)\t<PROCEDURE>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <PROGRAM>  {System.out.printf("@(%d,%d)\t<PROGRAM>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <READ>  {System.out.printf("@(%d,%d)\t<READ>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <REAL>  {System.out.printf("@(%d,%d)\t<REAL>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <RECORD>  {System.out.printf("@(%d,%d)\t<RECORD>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <RETURN>  {System.out.printf("@(%d,%d)\t<RETURN>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <RETURNS>  {System.out.printf("@(%d,%d)\t<RETURNS>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <SET>  {System.out.printf("@(%d,%d)\t<SET>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <STRING>  {System.out.printf("@(%d,%d)\t<STRING>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <THEN>  {System.out.printf("@(%d,%d)\t<THEN>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <TYPES>  {System.out.printf("@(%d,%d)\t<TYPES>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <UNTIL>  {System.out.printf("@(%d,%d)\t<UNTIL>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <VAR>  {System.out.printf("@(%d,%d)\t<VAR>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <VARIABLES>  {System.out.printf("@(%d,%d)\t<VARIABLES>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <WHILE>  {System.out.printf("@(%d,%d)\t<WHILE>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <WRITE>  {System.out.printf("@(%d,%d)\t<WRITE>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <IDENTIFIER> {System.out.printf("@(%d,%d)\t<ID>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <NUMERIC_LITERAL> {System.out.printf("@(%d,%d)\t<NUM>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <STRING_LITERAL> {System.out.printf("@(%d,%d)\t<STRING>\t-\t%s\n", t.beginLine, t.beginColumn, t);}
+
+	)* 
+	t = <EOF>
+	   {System.out.printf("@(%d,%d)\t<EOF>\t-\t%s\n", t.beginLine, t.beginColumn, t);}
+}
+
+
