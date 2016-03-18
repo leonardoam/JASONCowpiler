@@ -43,7 +43,8 @@ TOKEN:
 	<GTE: ">="> |
 	<LTE: "<="> |
 	<EQUAL: "="> |
-	<DIFF: "!"> 
+	<DIFF: "!"> |
+	<SPEC_CHAR: "%" | "'" | "^" | "|" | "_" | "#" | "`" | "@" >
 }
 
 
@@ -108,7 +109,7 @@ TOKEN:
 	<#CHARACTER: <LETTER> | <DIGIT>> |
 	<IDENTIFIER: <LETTER>(<CHARACTER>)*> |
 	
-	<#ANY_CHARACTER: <LETTER> | <DIGIT> | <SYMBOL>> |
+	<#ANY_CHARACTER: <LETTER> | <DIGIT> | <SPEC_CHAR> | <SYMBOL>> |
 	<STRING_LITERAL: "\""(<ANY_CHARACTER>)*"\"">
 }
 
@@ -177,5 +178,3 @@ void start():
 	t = <EOF>
 	   {System.out.printf("@(%d,%d)\t<EOF>\t-\t%s\n", t.beginLine, t.beginColumn, t);}
 }
-
-
