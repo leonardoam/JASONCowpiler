@@ -1,6 +1,10 @@
 # JASONCowpiler
 A compiler for a extended JASON language
 
+##Requirements
+- Java Virtual Machine
+- Javacc - https://java.net/projects/javacc/downloads/download/javacc-6.0.zip
+
 ###Generating parser
 `$javacc EJC.jj`
 
