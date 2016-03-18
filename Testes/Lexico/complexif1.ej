@@ -1,0 +1,13 @@
+{ este é o programa de teste 09 }
+
+program teste09;
+
+variables
+	integer x;
+
+begin
+	set x = 10;
+	if (x>=10\x<=100)&(~((x+2)*10>3.15)&x!2) then
+		write x;
+	endif
+end.

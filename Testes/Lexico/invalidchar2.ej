@@ -6,8 +6,8 @@ types
 	v array integer[100];
 
 variables
-	integer vár; { caracter invalido }
+	string str;
 
 begin
-	read vár; { caracter invalido }
+	set str = "váriável"; { caracter invalido }
 end.
