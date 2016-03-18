@@ -54,7 +54,6 @@ TOKEN:
  | <RPAR: ")">
 |	<SEMICOLON: ";">
 |	<COMMA: ",">
-//|	<QUOT: "\""> 
 |	<LSQ_BRACK: "[">
 |	<RSQ_BRACK: "]">
 |	<DOT: "."> 
