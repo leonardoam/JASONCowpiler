@@ -76,6 +76,11 @@ public class SymbolTable {
          
          return null;
      }
+     
+     public Symbol search(String id)
+     {
+         return search(getCurrentLevel(), id);
+     }
    
     public Integer getCurrentLevel() {
         return currentLevel;
