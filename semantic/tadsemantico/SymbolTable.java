@@ -21,6 +21,9 @@ public class SymbolTable {
         levels = new ArrayList<HashMap<String, Symbol>>();
         levels.add(new HashMap());
         currentLevel = 0;
+        this.addSymbol("integer", "integer");
+        this.addSymbol("real", "real");
+        this.addSymbol("string", "string");
     }
            
     public void addLevel()
