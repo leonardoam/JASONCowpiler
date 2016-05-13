@@ -2,12 +2,12 @@ package tadsemantico;
 
 /**
  *
- * @author emanuel
+ * @author darlan
  */
-class IntegerType implements Type {
-    private final int nbytes = 4;
+class RealType implements Type {
+    private final int nbytes = 8;
 
-    public IntegerType() {
+    public RealType() {
         
     }
 

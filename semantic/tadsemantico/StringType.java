@@ -2,12 +2,12 @@ package tadsemantico;
 
 /**
  *
- * @author emanuel
+ * @author darlan
  */
-class IntegerType implements Type {
-    private final int nbytes = 4;
+class StringType implements Type {
+    private final int nbytes = 256;
 
-    public IntegerType() {
+    public StringType() {
         
     }
 
@@ -18,6 +18,6 @@ class IntegerType implements Type {
 
     @Override
     public Object get(String field) {
-        return nbytes;
+        return new Integer(nbytes);
     }
 }

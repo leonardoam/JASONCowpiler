@@ -10,8 +10,6 @@ package tadsemantico;
  * @author emanuel
  */
 interface Type {
-    
     public boolean set(String field, Object value);
     public Object get(String field);
-    
 }

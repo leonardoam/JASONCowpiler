@@ -15,12 +15,18 @@ public class Symbol {
     Type type;
 
     public Symbol(String id, String typeName) {
-        this.typeName = typeName;
+        this.typeName = typeName.toUpperCase();
         this.id = id;
         
         switch(typeName.toUpperCase()){
             case "INTEGER": 
                 type = new IntegerType();
+                break;
+            case "REAL":
+                type = new RealType();
+                break;
+            case "STRING":
+                type = new StringType();
                 break;
             default: type = null;
         }

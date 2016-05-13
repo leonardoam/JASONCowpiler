@@ -70,14 +70,7 @@ public class SymbolTable {
          
          return null;
      }
-     
-     
-    /*
-    public void removeLevel();
-    public void addSymbol();
-    public boolean isSet();
-    */
-
+   
     public Integer getCurrentLevel() {
         return currentLevel;
     }
