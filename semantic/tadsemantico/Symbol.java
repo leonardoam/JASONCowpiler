@@ -28,6 +28,24 @@ public class Symbol {
             case "STRING":
                 type = new StringType();
                 break;
+            case "ARRAY": 
+                type = new ArrayType();
+                break;
+            case "CONSTANT":
+                type = new ConstantType();
+                break;
+            case "FUNCTION":
+                type = new FunctionType();
+                break;
+            case "PARAM": 
+                type = new ParamType();
+                break;
+            case "PROCEDURE":
+                type = new ProcedureType();
+                break;
+            case "RECORD":
+                type = new RecordType();
+                break;
             default: type = null;
         }
         //this.type

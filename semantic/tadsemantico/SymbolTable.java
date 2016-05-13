@@ -43,6 +43,7 @@ public class SymbolTable {
     
      public boolean addSymbol(String id, String type)
      {
+         id = id.toUpperCase();
          if(currentLevel >=0 && !isSet(id))
          {
              levels.get(currentLevel).put(id, new Symbol(id, type));
@@ -57,6 +58,7 @@ public class SymbolTable {
      
      public boolean isSet(String id)
      {
+         id = id.toUpperCase();
          if(currentLevel < 0)
              return false;
          
@@ -65,6 +67,7 @@ public class SymbolTable {
      
      public Symbol search(int level, String id)
      {
+         id = id.toUpperCase();
          while(level >= 0)
          {
              if(levels.get(level--).containsKey(id))
