@@ -15,12 +15,15 @@ public class Symbol {
     Type type;
 
     public Symbol(String id, String typeName) {
-        this.typeName = typeName;
+        this.typeName = typeName.toUpperCase();
         this.id = id;
         
-        switch(typeName.toUpperCase()){
-            case "INTEGER": 
+        switch (typeName.toUpperCase()) {
+            case "INTEGER":
                 type = new IntegerType();
+                break;
+            case "REAL":
+                type = new RealType();
                 break;
             case "STRING":
                 type = new StringType();
@@ -28,8 +31,26 @@ public class Symbol {
             case "ARRAY":
                 type = new ArrayType();
                 break;
-            default: type = null;
+            case "CONSTANT":
+                type = new ConstantType();
+                break;
+            case "FUNCTION":
+                type = new FunctionType();
+                break;
+            case "PARAM":
+                type = new ParamType();
+                break;
+            case "PROCEDURE":
+                type = new ProcedureType();
+                break;
+            case "RECORD":
+                type = new RecordType();
+                break;
+            default:
+                type = null;
         }
+ 
+      
         //this.type
     }
 
