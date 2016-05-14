@@ -49,6 +49,9 @@ public class Symbol {
             case "TYPE":
                 type = new TypeType();
                 break;
+            case "VARIABLE":
+                type = new VariableType();
+                break;
             default:
                 type = null;
         }

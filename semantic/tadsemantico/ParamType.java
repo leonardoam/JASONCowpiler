@@ -17,7 +17,7 @@ class ParamType implements Type {
     public boolean set(String field, Object value) {
         switch(field.toUpperCase()){
             case "TCLASS":
-                String tclass = ((String) value).toUpperCase();
+                tClass = ((String) value).toUpperCase();
                 if(tClass.equals("REFERENCE") || tClass.equals("VALUE")){
                     this.tClass = tClass;
                     return true;
