@@ -18,7 +18,7 @@ public class Symbol {
         this.typeName = typeName.toUpperCase();
         this.id = id;
         
-        switch (typeName.toUpperCase()) {
+        switch (this.typeName) {
             case "INTEGER":
                 type = new IntegerType();
                 break;
