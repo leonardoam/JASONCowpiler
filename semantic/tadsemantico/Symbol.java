@@ -46,6 +46,9 @@ public class Symbol {
             case "RECORD":
                 type = new RecordType();
                 break;
+            case "TYPE":
+                type = new TypeType();
+                break;
             default:
                 type = null;
         }

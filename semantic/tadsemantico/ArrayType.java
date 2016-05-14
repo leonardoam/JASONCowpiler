@@ -5,9 +5,9 @@ package tadsemantico;
  * @author darlan
  */
 class ArrayType implements Type {
-    private int nbytes = -1;
-    private int size = -1;
-    private Type elemType = null;
+    private Integer nbytes = null;
+    private Integer size = null;
+    private Symbol elemType = null;
 
     public ArrayType() {
         
@@ -18,13 +18,13 @@ class ArrayType implements Type {
         switch(field.toUpperCase()){
             case "SIZE":
                 this.size = (Integer) value;
-                if(elemType != null && size > 0)
-                    this.nbytes = ((Integer) elemType.get("nbytes"))*this.size;
+                if(elemType != null && elemType.getType().get("nbytes") != null && size != null)
+                    this.nbytes = ((Integer) elemType.getType().get("nbytes"))*this.size;
                 return true;
             case "ELEMTYPE":
-                this.elemType = (Type) value;
-                if(elemType != null && size > 0)
-                    this.nbytes = ((Integer) elemType.get("nbytes"))*this.size;
+                this.elemType = (Symbol) value;
+                if(elemType != null && elemType.getType().get("nbytes") != null && size != null)
+                    this.nbytes = ((Integer) elemType.getType().get("nbytes"))*this.size;
                 return true;
         }
         return false;
@@ -38,8 +38,6 @@ class ArrayType implements Type {
             case "ELEMTYPE":
                 return this.elemType;
             case "NBYTES":
-                if(this.nbytes < 0)
-                    return null;
                 return this.nbytes;
             default:
                 return null;

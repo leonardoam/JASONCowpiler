@@ -5,8 +5,8 @@ package tadsemantico;
  * @author darlan
  */
 class FunctionType implements Type {
-    private int nparams = -1;
-    private Type returnType = null;
+    private Integer nparams = null;
+    private Symbol returnType = null;
     
 
     public FunctionType() {
@@ -20,7 +20,7 @@ class FunctionType implements Type {
                 this.nparams = (Integer) value;
                 return true;
             case "RTYPE":
-                this.returnType = (Type) value;
+                this.returnType = (Symbol) value;
                 return true;
         }
         return false;
@@ -30,8 +30,6 @@ class FunctionType implements Type {
     public Object get(String field) {
         switch(field.toUpperCase()){
             case "NPARAMS":
-                if(this.nparams < 0)
-                    return null;
                 return this.nparams;
             case "RTYPE":
                 return this.returnType;

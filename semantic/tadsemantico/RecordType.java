@@ -6,9 +6,9 @@ import java.util.HashMap;
  * @author darlan
  */
 public class RecordType implements Type {
-    private int nbytes = -1;
-    private HashMap fields = new HashMap<String, Type>();
-
+    private Integer nbytes = null;
+    private HashMap fields = new HashMap<String, Symbol>();
+    
     public RecordType() {
         
     }
@@ -21,7 +21,9 @@ public class RecordType implements Type {
             return false;
         }
         fields.put(field, value);
-        this.nbytes = ((this.nbytes < 0)? (Integer)((Type) value).get("nbytes") : this.nbytes + (Integer)((Type) value).get("nbytes"));
+        Type t = ((Symbol)value).getType();
+        if(t.get("nbytes") != null)
+            this.nbytes = ((this.nbytes == null)? (Integer)t.get("nbytes") : this.nbytes + (Integer)t.get("nbytes"));
         return true;
     }
 
@@ -29,8 +31,6 @@ public class RecordType implements Type {
     public Object get(String field) {
         switch(field.toUpperCase()){
             case "NBYTES":
-                if(this.nbytes < 0)
-                    return null;
                 return this.nbytes;
             default:
                 if(!fields.containsKey(field))

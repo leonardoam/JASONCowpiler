@@ -5,7 +5,7 @@ package tadsemantico;
  * @author darlan
  */
 class ProcedureType implements Type {
-    private int nparams = -1;
+    private Integer nparams = null;
     
 
     public ProcedureType() {
@@ -26,8 +26,6 @@ class ProcedureType implements Type {
     public Object get(String field) {
         switch(field.toUpperCase()){
             case "NPARAMS":
-                if(this.nparams < 0)
-                    return null;
                 return this.nparams;
             default:
                 return null;

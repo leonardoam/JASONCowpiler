@@ -5,9 +5,9 @@ package tadsemantico;
  * @author darlan
  */
 class ConstantType implements Type {
-    private int nbytes = -1;
+    private Integer nbytes = null;
     private Object value = null;
-    private Type elemType = null;
+    private Symbol elemType = null;
 
     public ConstantType() {
         
@@ -20,8 +20,8 @@ class ConstantType implements Type {
                 this.value = value;
                 return true;
             case "ELEMTYPE":
-                this.elemType = (Type) value;
-                this.nbytes = (Integer) elemType.get("nbytes");
+                this.elemType = (Symbol) value;
+                this.nbytes = (Integer) elemType.getType().get("nbytes");
                 return true;
         }
         return false;
@@ -35,8 +35,6 @@ class ConstantType implements Type {
             case "ELEMTYPE":
                 return this.elemType;
             case "NBYTES":
-                if(this.nbytes < 0)
-                    return null;
                 return this.nbytes;
             default:
                 return null;

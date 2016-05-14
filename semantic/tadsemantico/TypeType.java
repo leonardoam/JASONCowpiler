@@ -5,8 +5,8 @@ package tadsemantico;
  * @author darlan
  */
 class TypeType implements Type {
-    private int nbytes = -1;
-    private Type elemType = null;
+    private Integer nbytes = null;
+    private Symbol elemType = null;
 
     public TypeType() {
         
@@ -16,8 +16,8 @@ class TypeType implements Type {
     public boolean set(String field, Object value) {
         switch(field.toUpperCase()){
             case "ELEMTYPE":
-                this.elemType = (Type) value;
-                this.nbytes = (Integer) elemType.get("nbytes");
+                this.elemType = (Symbol) value;
+                this.nbytes = (Integer) elemType.getType().get("nbytes");
                 return true;
         }
         return false;
@@ -29,8 +29,6 @@ class TypeType implements Type {
             case "ELEMTYPE":
                 return this.elemType;
             case "NBYTES":
-                if(this.nbytes < 0)
-                    return null;
                 return this.nbytes;
             default:
                 return null;

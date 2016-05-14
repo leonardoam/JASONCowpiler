@@ -6,8 +6,8 @@ package tadsemantico;
  */
 class ParamType implements Type {
     private String tClass = null;
-    private Type elemType = null;
-    private Integer address = null;
+    private Symbol elemType = null;
+    private Symbol param = null;//equivalent to address on a HashTable
 
     public ParamType() {
         
@@ -24,10 +24,10 @@ class ParamType implements Type {
                 }
                 return false;
             case "ELEMTYPE":
-                this.elemType = (Type) value;
+                this.elemType = (Symbol) value;
                 return true;
-            case "ADDRESS":
-                this.address = (Integer) value;
+            case "PARAM":
+                this.param = (Symbol) value;
                 return true;
         }
         return false;
@@ -40,8 +40,8 @@ class ParamType implements Type {
                 return this.tClass;
             case "ELEMTYPE":
                 return this.elemType;
-            case "ADDRESS":
-                return this.address;
+            case "PARAM":
+                return this.param;
             default:
                 return null;
         }
