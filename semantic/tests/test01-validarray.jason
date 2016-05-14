@@ -1,0 +1,7 @@
+program test01;
+types
+myarray Array Integer[10];
+
+begin
+
+end.

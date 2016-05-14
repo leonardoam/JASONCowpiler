@@ -22,6 +22,10 @@ public class Tadsemantico {
         Symbol s = sb.search(0, "count");
         //s.getType().get("nbytes");
         System.out.println(s.getType().get("nbytes"));
+        
+        sb.addSymbol("myarray", "ARRAY");
+        sb.search("myarray").getType().set("ELEMTYPE", new IntegerType());
+        sb.search("myarray").getType().set("ELEMTYPE", sb.search("myarray").getType());
     }
     
 }

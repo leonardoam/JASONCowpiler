@@ -1,0 +1,640 @@
+options{IGNORE_CASE = true;/*DEBUG_PARSER = true;*/}
+/*options{DEBUG_PARSER = true;}*/
+
+PARSER_BEGIN(EJC)
+import java.io.*;
+import tadsemantico.*;
+
+public class EJC{
+	public final static SymbolTable st = new SymbolTable();
+	public static int array_counter = 0;
+	public static int record_counter = 0;
+	private static String str;
+	
+    public static void main(String[] args) throws ParseException, TokenMgrError{
+        EJC EJC = new EJC(System.in);
+        try{
+            EJC.start();
+            System.out.println("Sucesso!");
+        }catch (Exception e) {
+            //System.out.println("Erro!\n" + e.toString());
+			e.printStackTrace();
+        }
+    }
+}
+
+PARSER_END(EJC)
+
+SKIP : {
+	 " "
+	|  "\t"
+	|  "\n"
+	|  "\r"
+	|  "\r\n"
+	|  <"{" (~["{", "}"])* "}">
+}
+
+/*Operadores*/
+TOKEN:
+{
+    <EOL: "\\n" | "\\r" | "\\r\\n" > |
+    <PLUS: "+"> |
+    <MINUS: "-"> |
+    <DIV: "/"> |
+    <MUL: "*"> |
+	<OR: "\\"> |
+	<AND: "&"> |
+	<NOT: "~"> |
+	<GT: ">"> |
+	<LT: "<"> |
+	<GTE: ">="> |
+	<LTE: "<="> |
+	<EQUAL: "="> |
+	<DIFF: "!"> 
+}
+
+
+/*Separadores e Agrupadores*/
+TOKEN:
+{
+  <LPAR: "(">
+ | <RPAR: ")">
+|	<SEMICOLON: ";">
+|	<COMMA: ",">
+//|	<QUOT: "\""> 
+|	<LSQ_BRACK: "[">
+|	<RSQ_BRACK: "]">
+|	<DOT: "."> 
+}
+
+/*Palavras reservadas e funcoes nativas*/
+TOKEN:
+{
+	<ARRAY: "array">
+	| 	<BEGIN: "begin">
+	| 	<CALL: "call">
+	|	<DO: "do">
+	|	<ELSE: "else">
+	| 	<END: "end">
+	|	<ENDIF: "endif">
+	| 	<ENDUNTIL: "enduntil">
+	| 	<ENDWHILE: "endwhile">
+	| 	<FUNCTION: "function">
+	| 	<IF: "if">
+	| 	<INTEGER: "integer">
+	| 	<PARAMETERS: "parameters">
+	| 	<PROCEDURE: "procedure">
+	| 	<PROGRAM: "program">
+	| 	<READ: "read">
+	| 	<REAL: "real">
+	| 	<RECORD: "record">
+	| 	<RETURN: "return">
+	| 	<RETURNS: "returns">
+	| 	<SET: "set">
+	| 	<STRING: "string">
+	| 	<THEN: "then">
+	| 	<TYPES: "types">
+	| 	<UNTIL: "until">
+	| 	<VAR: "var">
+	| 	<VARIABLES: "variables">
+	|	<WHILE: "while">
+	| 	<WRITE: "write">
+}
+
+/*Numeros, palavras e identificadores*/
+TOKEN:
+{
+	<#DIGIT: ["0"-"9"] > |
+	<#LETTER: "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p"| "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" | "A"| "B"| "C"| "D"| "E"| "F"| "G"| "H"| "I"| "J"| "K"| "L"| "M"| "N"| "O"| "P"| "Q"| "R"| "S"| "T"| "U"| "V"| "W"| "X"| "Y"| "Z"> |
+	<#SYMBOL: " " | "!" | "%" | "&" | "'" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | "\\" | ":" | ";" | "<" | "=" | ">"  | "[" | "]" | "^" | "{" | "|" | "}"> | 
+		
+	<#DIGITS: (<DIGIT>)*> |
+	<#FORCE_DIGITS: <DIGIT>(<DIGIT>)*> |
+	//<NUMERIC_LITERAL: <DIGITS> "." <FORCE_DIGITS> | <FORCE_DIGITS>"."<DIGITS>| <FORCE_DIGITS>> |
+	<FLOAT: <DIGITS> "." <FORCE_DIGITS> | <FORCE_DIGITS>"."<DIGITS>> 
+	//Java code
+	{ 
+		String[] strs = image.toString().split("\\.");
+		if(strs[0].length() > 9 || strs[1].length() > 9){
+			System.out.println("Erro semantico na linha "+input_stream.getBeginLine()+", coluna "+input_stream.getBeginColumn()+".\n\tLimite do numero de digitos excedido.");
+		}
+	}|
+	<INT: <FORCE_DIGITS>> 
+	//Java code
+	{ 
+		String str = image.toString();
+		if(str.length() > 9){
+			System.out.println("Erro semantico na linha "+input_stream.getBeginLine()+", coluna "+input_stream.getBeginColumn()+".\n\tLimite do numero de digitos excedido.");
+		}
+	}|
+	
+	<#CHARACTER: <LETTER> | <DIGIT>> |
+	<IDENTIFIER: <LETTER>(<CHARACTER>)*> 
+	//Java code
+	{ 
+		str = image.toString();
+		if(str.length() > 128){
+			System.out.println("Erro semantico na linha "+input_stream.getBeginLine()+", coluna "+input_stream.getBeginColumn()+".\n\tTamanho maximo para identificador excedido.");
+		}
+	}|
+	
+	<#ANY_CHARACTER: <LETTER> | <DIGIT> | <SYMBOL>> |
+	<STRING_LITERAL: "\""(<ANY_CHARACTER>)*"\"">
+	//Java code
+	{ 
+		str = image.toString();
+		if(str.length() > 256){
+			System.out.println("Erro semantico na linha "+input_stream.getBeginLine()+", coluna "+input_stream.getBeginColumn()+".\n\tLimite do numero de caracteres excedido.");
+		}
+	}
+}
+
+void start():
+{}
+{
+	Program()
+}
+
+//<Program> = <Header> <DeclSec> <Block>"."
+void Program():
+{}
+{
+	Header() DeclSec() Block()<DOT>
+}
+
+//<Header> = “program” “identifier” “;”
+void Header():
+{}
+{
+	<PROGRAM> <IDENTIFIER> <SEMICOLON>
+}
+
+//<Block> = “begin” <Statements> “end”
+void Block():
+{}
+{
+	<BEGIN> Statements() <END>
+}
+
+//<DeclSec> = <TypeDeclSec> <VarDeclSec> <SubprogramDecls> 
+void DeclSec():
+{}
+{
+	TypeDeclSec() VarDeclSec() SubProgramDecls()
+}
+
+//<TypeDeclSec> = [“types” <TypeDecls>]
+void TypeDeclSec():
+{}
+{
+	(<TYPES> TypeDecls())?
+}
+
+//<TypeDecls> = <TypeDecl> {<TypeDecl>}
+void TypeDecls():
+{}
+{
+	TypeDecl()(TypeDecl())*
+}
+
+//<TypeDecl> = “identifier” <TypeSpecification>
+void TypeDecl():
+{
+	Token t;
+}
+{
+	t = <IDENTIFIER>
+	//Java code
+	{
+		str = t.image.toString();
+		st.addSymbol(str, "TYPE");
+	}
+	TypeSpecification()
+}
+
+//<TypeSpecification> = <ArraySpecification> | <RecordSpecification>
+void TypeSpecification():
+{}
+{
+	ArraySpecification() | 
+	RecordSpecification()
+}
+
+//<ArraySpecification> = “array” <DataType> “[” <NumericLiteral> ”]” ";"
+void ArraySpecification():
+{
+	Token t;
+}
+{
+	<ARRAY> t = DataType() 
+	//Java code
+	{
+            String arrayName = "ARRAY"+array_counter;    
+           //Verify if the ArrayType is valid (i.e, INTEGER, REAL, STRING)
+           switch(t.image.toUpperCase()) {
+            case "INTEGER":
+                st.addSymbol(arrayName, "ARRAY");
+                st.search(arrayName).getType().set("ELEMTYPE", new IntegerType());
+                array_counter++;
+             break;
+            case "REAL":
+                st.addSymbol(arrayName, "ARRAY");
+                st.search(arrayName).getType().set("ELEMTYPE", new RealType());
+                array_counter++;
+            break;
+            default:
+              System.err.println("O Tipo " + t.image.toString() + " não é permitido para Arrays!");   
+               //must return, otherwise the array (that doesn't exist) size will be store on a null entry 
+              return;
+            }
+		
+	}
+	<LSQ_BRACK> t = <INT>
+	//Java code
+	{       //only if the array exists (check the code above!)
+		int size = Integer.parseInt(t.image.toString());
+		st.search(arrayName).getType().set("size", size);
+		//st.search(arrayName).getType().set("ELEMTYPE", st.search(arrayName).getType());
+	}
+	<RSQ_BRACK><SEMICOLON>
+}
+
+
+//<RecordSpecification> = “record” <VarDecls> “end” “;”
+void RecordSpecification():
+{}
+{
+	<RECORD> VarDecls() <END><SEMICOLON>
+}
+
+//<VarDeclSec> = [“variables” <VarDecls>]
+void VarDeclSec():
+{}
+{
+	(<VARIABLES> VarDecls())?
+}
+
+//<VarDecls> = <VarDecl> {<VarDecl>}
+void VarDecls():
+{}
+{
+	VarDecl() (VarDecl())*
+}
+
+//<VarDecl> = <DataType> <IdList> “;”
+void VarDecl():
+{}
+{
+	DataType() IdList() <SEMICOLON>
+}
+
+//<DataType> = “real” | “integer” | <Identifier> | <String>
+Token DataType():
+{
+	Token t;
+}
+{
+	(t = <REAL> | t = <INTEGER> | 
+	t = <IDENTIFIER> 
+	//Java code
+	{
+		Symbol dt = st.search(t.image.toString());
+		if(dt == null || (dt != null && !dt.getTypeName().equals("TYPE"))){
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tTipo "+t.image.toString()+" nao esta definido.");
+		}
+	}
+	| t = <STRING>)
+	{return t;}
+}
+
+//<IdList> = <Identifier> {“,” <Identifier>}
+void IdList():
+{}
+{
+	<IDENTIFIER> (<COMMA><IDENTIFIER>)*
+}
+
+//<SubProgramDecls> = {<SubProgramDecl>}
+void SubProgramDecls():
+{}
+{
+	(SubProgramDecl())*
+}
+
+//<SubProgramDecl> = <ProcDecl> | <FunctionDecl>
+void SubProgramDecl():
+{}
+{
+	ProcDecl() | FunctionDecl()
+}
+
+//<ProcDecl> = <ProcHeader> <SubProgramDeclSec> <Block> “;”
+void ProcDecl():
+{}
+{
+	ProcHeader() SubProgramDeclSec() Block() <SEMICOLON>
+}
+
+//<ProcHeader> = “procedure” <Identifier> “;”
+void ProcHeader():
+{}
+{
+	<PROCEDURE> <IDENTIFIER> <SEMICOLON>
+}
+
+//<SubProgramDeclSec> = <ParamDeclSec> <DeclSec>
+void SubProgramDeclSec():
+{}
+{
+	ParamDeclSec() DeclSec()
+}
+
+//<ParamDeclSec> = [“parameters” <ParamDecls>]
+void ParamDeclSec():
+{}
+{
+	(<PARAMETERS> ParamDecls())?
+}
+
+//<ParamDecls> = {<ParamDecl>}
+void ParamDecls():
+{}
+{
+	(ParamDecl())*
+}
+
+//<ParamDecl> =["var"] <DataType> <Identifier> ";"
+void ParamDecl():
+{}
+{
+	(<VAR>)? DataType() <IDENTIFIER> <SEMICOLON>
+}
+
+//<FunctionDecl> = <FunctionHeader> <SubProgramDeclSec> <FunctionBlock> “;”
+void FunctionDecl():
+{}
+{
+	FunctionHeader() SubProgramDeclSec() FunctionBlock() <SEMICOLON>
+}
+
+//<FunctionHeader> = “function” <Identifier> “returns” <DataType>;
+void FunctionHeader():
+{}
+{
+	<FUNCTION> <IDENTIFIER> <RETURNS> DataType() <SEMICOLON>
+}
+
+//modificado pra resolver ambiguidade
+//<FunctionBlock> = “begin” <SpecialStatements> “end”
+void FunctionBlock():
+{}
+{
+	<BEGIN> SpecialStatements() <END>
+}
+
+//<Statements> = <Statement> { “;”<Statement>}
+void Statements():
+{}
+{
+	Statement()(<SEMICOLON>Statement())*
+}
+
+//criado para resolver a ambiguidade com ReturnStatement
+//<SpecialStatements> = <Statement>“;”{<Statement>“;”}<ReturnStatement>
+void SpecialStatements():
+{}
+{
+	(LOOKAHEAD(2)Statement()<SEMICOLON>)+ReturnStatement()
+}
+
+//<Statement> = [“read” <Variable> 
+	//| “set” <Variable> “=” <Expression> 
+	//| “write” <Variable>
+	//| “if” <Condition> “then” <Statements> <ElseClause>
+	//| “while” <Condition> “do” <Statements>  “endwhile”
+	//| “until” <Condition> "do" <Statements> “enduntil”
+	//| “call” <IDENTIFIER> <ArgList> ]
+void Statement():
+{}
+{
+	(<READ> Variable() |
+	<SET> Variable() <EQUAL> Expression() |
+	<WRITE> Variable() |
+	<IF> Condition() <THEN> Statements() ElseClause() |
+	<WHILE> Condition() <DO> Statements() <ENDWHILE> |
+	<UNTIL> Condition() <DO> Statements() <ENDUNTIL> |
+	<CALL> <IDENTIFIER> ArgList())?
+}
+	
+//<ElseClause> = [“else” <Statements>] “endif” 
+void ElseClause():
+{}
+{
+	(<ELSE> Statements())? <ENDIF>
+}
+
+//tiramos o ; como parte da resolução da ambiguidade com statement
+//<ReturnStatement> = “;” “return” “(” <Condition> “)”
+void ReturnStatement():
+{}
+{
+	<RETURN><LPAR>Condition()<RPAR>
+}
+
+//<ArgList> = [“(” <Arguments> “)” ]
+void ArgList():
+{}
+{
+	(<LPAR>Arguments()<RPAR>)?
+}
+
+//usado para resolver ambiguidade entre variable e chamada de funcao
+//<ArgListSpecial> = “(” <Arguments> “)” 
+void ArgListSpecial():
+{}
+{
+	<LPAR>Arguments()<RPAR>
+}
+
+//<Arguments> = <Argument> {“,” <Argument>}
+void Arguments():
+{}
+{
+	Argument() (<COMMA> Argument())*
+}
+
+//<Condition> = <CompoundCondition> {“\” <CompoundCondition>}
+void Condition():
+{}
+{
+	CompoundCondition() (<OR> CompoundCondition())*
+}
+
+//<CompoundCondition> =<SimpleCondition> {“&” <SimpleCondition>}
+void CompoundCondition():
+{}
+{
+	SimpleCondition() (<AND> SimpleCondition())*
+}
+
+//<SimpleCondition> = <Expression> [<RelOp> <Expression>] 
+void SimpleCondition():
+{}
+{
+	Expression() (RelOp() Expression())?
+}
+
+//<Expression> =  <Term> {<AddOp> <Term>} 
+void Expression():
+{}
+{
+	Term() (AddOp() Term())*
+}
+
+//<Term> =  <Unary> {<MultiOP> <Unary>}
+void Term():
+{}
+{
+	Unary() (MultOp() Unary())*
+}
+
+//<Unary> = {(“+” | ”-”)} <Factor>
+void Unary():
+{}
+{
+	(<PLUS>|<MINUS>)*Factor()
+}
+
+//tambem modificado para remover ambiguidade entre variable e chamada de funcao
+//<Factor> = <Identifier> <ArgListSpecial> | <NumericLiteral> | <StringLiteral> | “~”<Factor> | “(” <Condition> “)” | <Variable>
+void Factor():
+{}
+{
+	LOOKAHEAD(2) <IDENTIFIER> ArgListSpecial() |
+	<FLOAT> |
+	<INT>	|
+	<STRING_LITERAL> |
+	<NOT>Factor() |
+	<LPAR>Condition() <RPAR> |
+	Variable()
+}
+
+/*//resolve problema do token inicial comum
+void VariableOrFunctionCall():
+{}
+{
+	VariableAccess()
+	ArgList()
+}
+
+//<VariableAccess> = [“[” <Expression> “]”]{“.”<Variable>}
+void VariableAccess():
+{}
+{
+	(<LSQ_BRACK>Expression()<RSQ_BRACK>)?(LOOKAHEAD(2)<DOT>Variable())*
+}*/
+
+//<VariableAccess> = <Identifier> [“[” <Expression> “]”]{“.”<Variable>}
+void Variable():
+{}
+{
+	<IDENTIFIER>(<LSQ_BRACK>Expression()<RSQ_BRACK>)?(LOOKAHEAD(2)<DOT>Variable())*
+}
+
+//<RelOp> = “=” | “!” | “>” | “<” | “<=” | “>=”
+void RelOp():
+{}
+{
+	<EQUAL> | <DIFF> | LOOKAHEAD(2) <GTE> | LOOKAHEAD(2)<LTE> | <GT> | <LT>
+}
+
+//<AddOp> = “+” | “-”
+void AddOp():
+{}
+{
+	<PLUS> | <MINUS>
+}
+
+//<MultOp> = “*” | “/”
+void MultOp():
+{}
+{
+	<MUL> | <DIV>
+}
+
+//<Argument> = <Condition>
+void Argument():
+{}
+{
+	Condition()
+}
+	
+/*void start():
+{
+	Token t;
+}
+{
+    (
+		t = <EOL> {System.out.printf("@(%d,%d)\t<EOL>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <PLUS>   {System.out.printf("@(%d,%d)\t<PLUS>\t-\t%s\n", t.beginLine, t.beginColumn, t);}  | 
+		t = <MINUS>  {System.out.printf("@(%d,%d)\t<MINUS>\t-\t%s\n", t.beginLine, t.beginColumn, t);}  | 
+		t = <DIV>  {System.out.printf("@(%d,%d)\t<DIV>\t-\t%s\n", t.beginLine, t.beginColumn, t);}  | 
+		t = <MUL>  {System.out.printf("@(%d,%d)\t<MUL>\t-\t%s\n", t.beginLine, t.beginColumn, t);}  | 
+		t = <OR>  {System.out.printf("@(%d,%d)\t<OR>\t-\t%s\n", t.beginLine, t.beginColumn, t);}  |
+		t = <AND>  {System.out.printf("@(%d,%d)\t<AND>\t-\t%s\n", t.beginLine, t.beginColumn, t);}  | 
+		t = <NOT>  {System.out.printf("@(%d,%d)\t<NOT>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <GT> {System.out.printf("@(%d,%d)\t<GT>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <LT> {System.out.printf("@(%d,%d)\t<LT>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <GTE> {System.out.printf("@(%d,%d)\t<GTE>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <LTE> {System.out.printf("@(%d,%d)\t<LTE>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <EQUAL> {System.out.printf("@(%d,%d)\t<EQUAL>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <DIFF> {System.out.printf("@(%d,%d)\t<DIFF>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <LPAR> {System.out.printf("@(%d,%d)\t<LPAR>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <RPAR> {System.out.printf("@(%d,%d)\t<RPAR>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <SEMICOLON> {System.out.printf("@(%d,%d)\t<SEMICOLON>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <COMMA> {System.out.printf("@(%d,%d)\t<COMMA>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+	//	t = <QUOT> {System.out.printf("@(%d,%d)\t<QUOT>\t-\t%s\n", t.beginLine, t.beginColumn, t);} | 
+		t = <LSQ_BRACK> {System.out.printf("@(%d,%d)\t<LSQ_BRACK>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <RSQ_BRACK> {System.out.printf("@(%d,%d)\t<RSQ_BRACK>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <DOT> {System.out.printf("@(%d,%d)\t<DOT>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <ARRAY>  {System.out.printf("@(%d,%d)\t<ARRAY>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <BEGIN>  {System.out.printf("@(%d,%d)\t<BEGIN>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <CALL>  {System.out.printf("@(%d,%d)\t<CALL>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <DO>  {System.out.printf("@(%d,%d)\t<DO>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <ELSE>  {System.out.printf("@(%d,%d)\t<ELSE>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <END>  {System.out.printf("@(%d,%d)\t<END>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <ENDIF>  {System.out.printf("@(%d,%d)\t<ENDIF>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <ENDUNTIL>  {System.out.printf("@(%d,%d)\t<ENDUNTIL>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <ENDWHILE>  {System.out.printf("@(%d,%d)\t<ENDWHILE>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <FUNCTION>  {System.out.printf("@(%d,%d)\t<FUNCTION>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <IF>  {System.out.printf("@(%d,%d)\t<IF>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <INTEGER>  {System.out.printf("@(%d,%d)\t<INTEGER>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <PARAMETERS>  {System.out.printf("@(%d,%d)\t<PARAMETERS>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <PROCEDURE>  {System.out.printf("@(%d,%d)\t<PROCEDURE>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <PROGRAM>  {System.out.printf("@(%d,%d)\t<PROGRAM>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <READ>  {System.out.printf("@(%d,%d)\t<READ>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <REAL>  {System.out.printf("@(%d,%d)\t<REAL>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <RECORD>  {System.out.printf("@(%d,%d)\t<RECORD>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <RETURN>  {System.out.printf("@(%d,%d)\t<RETURN>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <RETURNS>  {System.out.printf("@(%d,%d)\t<RETURNS>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <SET>  {System.out.printf("@(%d,%d)\t<SET>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <STRING>  {System.out.printf("@(%d,%d)\t<STRING>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <THEN>  {System.out.printf("@(%d,%d)\t<THEN>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <TYPES>  {System.out.printf("@(%d,%d)\t<TYPES>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <UNTIL>  {System.out.printf("@(%d,%d)\t<UNTIL>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <VAR>  {System.out.printf("@(%d,%d)\t<VAR>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <VARIABLES>  {System.out.printf("@(%d,%d)\t<VARIABLES>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <WHILE>  {System.out.printf("@(%d,%d)\t<WHILE>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <WRITE>  {System.out.printf("@(%d,%d)\t<WRITE>\t-\t%s\n", t.beginLine, t.beginColumn, t);}|
+		t = <IDENTIFIER> {System.out.printf("@(%d,%d)\t<ID>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		//t = <NUMERIC_LITERAL> {System.out.printf("@(%d,%d)\t<NUM>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <FLOAT> {System.out.printf("@(%d,%d)\t<FLOAT>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <INT> {System.out.printf("@(%d,%d)\t<INT>\t-\t%s\n", t.beginLine, t.beginColumn, t);} |
+		t = <STRING_LITERAL> {System.out.printf("@(%d,%d)\t<STRING>\t-\t%s\n", t.beginLine, t.beginColumn, t);}
+
+	)* 
+	t = <EOF>
+	   {System.out.printf("@(%d,%d)\t<EOF>\t-\t%s\n", t.beginLine, t.beginColumn, t);}
+}
+*/
+

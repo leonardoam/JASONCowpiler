@@ -4,7 +4,7 @@ package tadsemantico;
  *
  * @author darlan
  */
-class RealType implements Type {
+public class RealType implements Type {
     private final int nbytes = 8;
 
     public RealType() {

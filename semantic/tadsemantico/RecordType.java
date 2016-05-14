@@ -5,7 +5,7 @@ import java.util.HashMap;
  *
  * @author darlan
  */
-class RecordType implements Type {
+public class RecordType implements Type {
     private int nbytes = -1;
     private HashMap fields = new HashMap<String, Type>();
 

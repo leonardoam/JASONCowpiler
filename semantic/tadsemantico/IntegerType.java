@@ -4,7 +4,7 @@ package tadsemantico;
  *
  * @author emanuel
  */
-class IntegerType implements Type {
+public class IntegerType implements Type {
     private final int nbytes = 4;
 
     public IntegerType() {
