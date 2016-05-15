@@ -160,6 +160,10 @@ void Program():
 {}
 {
 	Header() DeclSec() Block()<DOT>
+	//Java code
+	{
+		st.removeLevel();
+	}
 }
 
 //<Header> = “program” “identifier” “;”
@@ -207,7 +211,9 @@ void TypeDecl():
 	//Java code
 	{
 		str = t.image.toString();
-		st.addSymbol(str, "TYPE");
+		if(!st.addSymbol(str, "TYPE")){
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tTipo "+t.image.toString()+" ja foi definido nesse contexto.");
+		}
 	}
 	TypeSpecification()
 }
@@ -230,31 +236,26 @@ void ArraySpecification():
 	//Java code
 	{
             String arrayName = "ARRAY"+array_counter;    
-           //Verify if the ArrayType is valid (i.e, INTEGER, REAL, STRING)
-           switch(t.image.toUpperCase()) {
-            case "INTEGER":
-                st.addSymbol(arrayName, "ARRAY");
-                st.search(arrayName).getType().set("ELEMTYPE", new IntegerType());
-                array_counter++;
-             break;
-            case "REAL":
-                st.addSymbol(arrayName, "ARRAY");
-                st.search(arrayName).getType().set("ELEMTYPE", new RealType());
-                array_counter++;
-            break;
-            default:
-              System.err.println("O Tipo " + t.image.toString() + " não é permitido para Arrays!");   
-               //must return, otherwise the array (that doesn't exist) size will be store on a null entry 
-              return;
-            }
+			st.addSymbol(arrayName, "ARRAY");
+			Symbol s = st.search(t.image.toString());
+			if(s == null || (s != null && !s.getTypeName().equals("TYPE") && !s.getTypeName().equals("REAL") && !s.getTypeName().equals("STRING") && !s.getTypeName().equals("INTEGER")))
+				//System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tTipo "+t.image.toString()+" nao definido.");
+				;
+            else 
+				st.search(arrayName).getType().set("ELEMTYPE", s);
+            array_counter++;
 		
 	}
 	<LSQ_BRACK> t = <INT>
 	//Java code
 	{       //only if the array exists (check the code above!)
-		int size = Integer.parseInt(t.image.toString());
+		int size = 0;
+		try{
+			size = Integer.parseInt(t.image.toString());
+		}catch(Exception e){
+		}
 		st.search(arrayName).getType().set("size", size);
-		//st.search(arrayName).getType().set("ELEMTYPE", st.search(arrayName).getType());
+		st.search(str).getType().set("ELEMTYPE", st.search(arrayName));
 	}
 	<RSQ_BRACK><SEMICOLON>
 }
@@ -262,30 +263,46 @@ void ArraySpecification():
 
 //<RecordSpecification> = “record” <VarDecls> “end” “;”
 void RecordSpecification():
-{}
 {
-	<RECORD> VarDecls() <END><SEMICOLON>
+}
+{
+	<RECORD> 
+	//Java code
+	{
+            String recordName = "RECORD"+record_counter;    
+			st.addSymbol(recordName, "RECORD");
+	}
+	VarDecls(true) 
+	//Java code
+	{
+			record_counter++;
+            st.search(str).getType().set("ELEMTYPE", st.search(recordName));
+	}
+	<END><SEMICOLON>
 }
 
 //<VarDeclSec> = [“variables” <VarDecls>]
 void VarDeclSec():
 {}
 {
-	(<VARIABLES> VarDecls())?
+	(<VARIABLES> VarDecls(false))?
 }
 
 //<VarDecls> = <VarDecl> {<VarDecl>}
-void VarDecls():
+void VarDecls(boolean comingFromRecordSpec):
 {}
 {
-	VarDecl() (VarDecl())*
+	VarDecl(comingFromRecordSpec) (VarDecl(comingFromRecordSpec))*
 }
 
 //<VarDecl> = <DataType> <IdList> “;”
-void VarDecl():
-{}
+void VarDecl(boolean comingFromRecordSpec):
 {
-	DataType() IdList() <SEMICOLON>
+	Token t;
+}
+{
+	t = DataType() 
+	IdList(t, comingFromRecordSpec) <SEMICOLON>
 }
 
 //<DataType> = “real” | “integer” | <Identifier> | <String>
@@ -307,11 +324,43 @@ Token DataType():
 	{return t;}
 }
 
-//<IdList> = <Identifier> {“,” <Identifier>}
-void IdList():
+void addRecordField(Token datatype, Token identifier, boolean comingFromRecordSpec):
 {}
+{	//Java code
+	{
+		if(comingFromRecordSpec){
+			boolean result = st.search("RECORD"+record_counter).getType().set(identifier.image.toString(), st.search(datatype.image.toString()));
+			if(!result){
+				System.out.println("Erro semantico na linha "+identifier.beginLine+", coluna "+identifier.beginColumn+".\n\tCampo "+identifier.image.toString()+" duplicado.");
+			}			
+		}else if(st.isSet(identifier.image.toString())){
+			System.out.println("Erro semantico na linha "+identifier.beginLine+", coluna "+identifier.beginColumn+".\n\tIdentificador "+identifier.image.toString()+" duplicado.");
+		}else{
+			st.addSymbol(identifier.image.toString(), "VARIABLE");
+			st.search(identifier.image.toString()).getType().set("ELEMTYPE", st.search(datatype.image.toString()));
+		}
+	}
+}
+
+//<IdList> = <Identifier> {“,” <Identifier>}
+void IdList(Token datatype, boolean comingFromRecordSpec):
 {
-	<IDENTIFIER> (<COMMA><IDENTIFIER>)*
+		Token t;
+}
+{
+	t = <IDENTIFIER>
+	//Java code
+	{
+			addRecordField(datatype, t, comingFromRecordSpec);
+	}
+	(
+		<COMMA>
+		t = <IDENTIFIER>
+		//Java code
+		{
+				addRecordField(datatype, t, comingFromRecordSpec);
+		}
+	)*
 }
 
 //<SubProgramDecls> = {<SubProgramDecl>}
@@ -325,63 +374,137 @@ void SubProgramDecls():
 void SubProgramDecl():
 {}
 {
-	ProcDecl() | FunctionDecl()
+	(ProcDecl() | FunctionDecl())
+	//Java code
+	{
+		st.removeLevel();
+	}
 }
 
 //<ProcDecl> = <ProcHeader> <SubProgramDeclSec> <Block> “;”
 void ProcDecl():
-{}
 {
-	ProcHeader() SubProgramDeclSec() Block() <SEMICOLON>
+	String procName;
+}
+{
+	procName = ProcHeader() SubProgramDeclSec(procName) Block() <SEMICOLON>
 }
 
 //<ProcHeader> = “procedure” <Identifier> “;”
-void ProcHeader():
-{}
+String ProcHeader():
 {
-	<PROCEDURE> <IDENTIFIER> <SEMICOLON>
+	Token t;
+}
+{
+	<PROCEDURE> t = <IDENTIFIER> <SEMICOLON>
+	//Java code
+	{
+		String procName = t.image.toString();
+		if(!st.addSymbol(procName, "PROCEDURE")){
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tIdentificador "+t.image.toString()+" ja foi definido nesse contexto.");
+		}
+		st.addLevel();
+		return procName;
+	}
 }
 
 //<SubProgramDeclSec> = <ParamDeclSec> <DeclSec>
-void SubProgramDeclSec():
-{}
+void SubProgramDeclSec(String subProgramName):
+{ 
+	int nparams = 0;
+}
 {
-	ParamDeclSec() DeclSec()
+	nparams = ParamDeclSec()
+	//Java code
+	{
+		st.search(st.getCurrentLevel()-1, subProgramName).getType().set("nparams", nparams);
+	}
+	DeclSec()
 }
 
 //<ParamDeclSec> = [“parameters” <ParamDecls>]
-void ParamDeclSec():
-{}
+int ParamDeclSec():
 {
-	(<PARAMETERS> ParamDecls())?
+	int nparams = 0;
+}
+{
+	(<PARAMETERS> nparams = ParamDecls())?
+	//Java code
+	{
+		return nparams;
+	}
 }
 
 //<ParamDecls> = {<ParamDecl>}
-void ParamDecls():
-{}
+int ParamDecls():
 {
-	(ParamDecl())*
+	int nparams = 0;
+}
+{
+	(nparams = ParamDecl(nparams))*
+	//Java code
+	{
+		return nparams;
+	}
 }
 
 //<ParamDecl> =["var"] <DataType> <Identifier> ";"
-void ParamDecl():
-{}
+int ParamDecl(int nparams):
 {
-	(<VAR>)? DataType() <IDENTIFIER> <SEMICOLON>
+	Token datatype;
+	Token identifier;
+	String tClass = "VALUE";
+}
+{
+	(
+		<VAR>
+		//Java code
+		{
+				tClass = "REFERENCE";
+		}
+	)? 
+	datatype = DataType() identifier = <IDENTIFIER> <SEMICOLON>
+	//Java code
+	{
+		if(!st.addSymbol(identifier.image.toString(), "PARAM")){
+			System.out.println("Erro semantico na linha "+identifier.beginLine+", coluna "+identifier.beginColumn+".\n\tIdentificador "+identifier.image.toString()+" ja foi definido nesse contexto.");
+		}else{
+			Type t = st.search(identifier.image.toString()).getType();
+			t.set("ELEMTYPE", st.search(datatype.image.toString()));
+			t.set("TCLASS", tClass);
+		}
+		return nparams+1;
+	}
 }
 
 //<FunctionDecl> = <FunctionHeader> <SubProgramDeclSec> <FunctionBlock> “;”
 void FunctionDecl():
-{}
 {
-	FunctionHeader() SubProgramDeclSec() FunctionBlock() <SEMICOLON>
+	String funcName;
+}
+{
+	funcName = FunctionHeader() SubProgramDeclSec(funcName) FunctionBlock() <SEMICOLON>
 }
 
 //<FunctionHeader> = “function” <Identifier> “returns” <DataType>;
-void FunctionHeader():
-{}
+String FunctionHeader():
 {
-	<FUNCTION> <IDENTIFIER> <RETURNS> DataType() <SEMICOLON>
+	Token t;
+	Token returnType;
+}
+{
+	<FUNCTION> t = <IDENTIFIER> <RETURNS> returnType = DataType() <SEMICOLON>
+	//Java code
+	{
+		String funcName = t.image.toString();
+		if(!st.addSymbol(funcName, "FUNCTION")){
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tIdentificador "+t.image.toString()+" ja foi definido nesse contexto.");
+		}else{
+			st.search(funcName).getType().set("RTYPE", st.search(returnType.image.toString()));
+		}
+		st.addLevel();
+		return funcName;
+	}
 }
 
 //modificado pra resolver ambiguidade
@@ -415,15 +538,30 @@ void SpecialStatements():
 	//| “until” <Condition> "do" <Statements> “enduntil”
 	//| “call” <IDENTIFIER> <ArgList> ]
 void Statement():
-{}
 {
-	(<READ> Variable() |
-	<SET> Variable() <EQUAL> Expression() |
-	<WRITE> Variable() |
+	Token t;
+	int nparams;
+}
+{
+	(<READ> Variable(false) |
+	<SET> Variable(false) <EQUAL> Expression() |
+	<WRITE> Variable(false) |
 	<IF> Condition() <THEN> Statements() ElseClause() |
 	<WHILE> Condition() <DO> Statements() <ENDWHILE> |
 	<UNTIL> Condition() <DO> Statements() <ENDUNTIL> |
-	<CALL> <IDENTIFIER> ArgList())?
+	<CALL> t = <IDENTIFIER> nparams = ArgList()
+	//Java code
+	{
+		Symbol s = st.search(t.image.toString());
+		if(s == null){
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tProcedimento "+t.image.toString()+" nao foi definido.");
+		}else if(!s.getTypeName().equals("PROCEDURE")){
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\t"+t.image.toString()+" nao eh um procedimento.");
+		}else if(s.getType().get("NPARAMS") == null || !s.getType().get("NPARAMS").equals(nparams)){
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tNumero de argumentos passados para o procedimento "+t.image.toString()+" eh diferente do esperado.");
+		}
+	}
+	)?
 }
 	
 //<ElseClause> = [“else” <Statements>] “endif” 
@@ -442,25 +580,46 @@ void ReturnStatement():
 }
 
 //<ArgList> = [“(” <Arguments> “)” ]
-void ArgList():
-{}
+int ArgList():
 {
-	(<LPAR>Arguments()<RPAR>)?
+	int nparams = 0;
+}
+{
+	(<LPAR>nparams = Arguments()<RPAR>)?
+	{
+		return nparams;
+	}
 }
 
 //usado para resolver ambiguidade entre variable e chamada de funcao
 //<ArgListSpecial> = “(” <Arguments> “)” 
-void ArgListSpecial():
-{}
+int ArgListSpecial():
 {
-	<LPAR>Arguments()<RPAR>
+	int nparams = 0;
+}
+{
+	<LPAR>nparams = Arguments()<RPAR>
+	//Java code
+	{
+		return nparams;
+	}
 }
 
 //<Arguments> = <Argument> {“,” <Argument>}
-void Arguments():
-{}
+int Arguments():
 {
-	Argument() (<COMMA> Argument())*
+	int nparams = 0;
+}
+{
+	Argument()
+	{nparams++;}//Java code
+	(
+		<COMMA> Argument() {nparams++;}//Java code
+	)*
+	//Java code
+	{
+		return nparams;
+	}
 }
 
 //<Condition> = <CompoundCondition> {“\” <CompoundCondition>}
@@ -508,37 +667,52 @@ void Unary():
 //tambem modificado para remover ambiguidade entre variable e chamada de funcao
 //<Factor> = <Identifier> <ArgListSpecial> | <NumericLiteral> | <StringLiteral> | “~”<Factor> | “(” <Condition> “)” | <Variable>
 void Factor():
-{}
 {
-	LOOKAHEAD(2) <IDENTIFIER> ArgListSpecial() |
+	Token t;
+	int nparams = 0;
+}
+{
+	LOOKAHEAD(2) t = <IDENTIFIER> nparams = ArgListSpecial() 
+	//Java code
+	{
+		Symbol s = st.search(t.image.toString());
+		if(s == null){
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tFuncao "+t.image.toString()+" nao foi definida.");
+		}else if(!s.getTypeName().equals("FUNCTION") && nparams > 0){
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\t"+t.image.toString()+" nao eh uma funcao.");
+		}else if(s.getTypeName().equals("FUNCTION") && !s.getType().get("NPARAMS").equals(nparams)){
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tNumero de argumentos passados para a funcao "+t.image.toString()+" eh diferente do esperado.");
+		}
+	}
+	|
 	<FLOAT> |
 	<INT>	|
 	<STRING_LITERAL> |
 	<NOT>Factor() |
 	<LPAR>Condition() <RPAR> |
-	Variable()
+	Variable(false)
 }
 
-/*//resolve problema do token inicial comum
-void VariableOrFunctionCall():
-{}
+//<Variable> = <Identifier> [“[” <Expression> “]”]{“.”<Variable>}
+void Variable(boolean recursion):
 {
-	VariableAccess()
-	ArgList()
+	Token t;
 }
-
-//<VariableAccess> = [“[” <Expression> “]”]{“.”<Variable>}
-void VariableAccess():
-{}
 {
-	(<LSQ_BRACK>Expression()<RSQ_BRACK>)?(LOOKAHEAD(2)<DOT>Variable())*
-}*/
-
-//<VariableAccess> = <Identifier> [“[” <Expression> “]”]{“.”<Variable>}
-void Variable():
-{}
-{
-	<IDENTIFIER>(<LSQ_BRACK>Expression()<RSQ_BRACK>)?(LOOKAHEAD(2)<DOT>Variable())*
+	t = <IDENTIFIER>(<LSQ_BRACK>Expression()<RSQ_BRACK>)?(LOOKAHEAD(2)<DOT>Variable(true))*
+	//Java code
+	{
+		if(!recursion){
+			Symbol s = st.search(t.image.toString());
+			if(s == null){
+				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\t"+t.image.toString()+" nao foi definido.");
+			}else if(!s.getTypeName().equals("VARIABLE") && !s.getTypeName().equals("PARAM") && !s.getTypeName().equals("FUNCTION")){
+				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\t"+t.image.toString()+" nao pode ser usado nesse contexto.\n\tEsperado:\n\tFuncao, parametro ou variavel.");
+			}else if(s.getTypeName().equals("FUNCTION") && !s.getType().get("NPARAMS").equals(0)){
+				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tNumero de argumentos passados para a funcao "+t.image.toString()+" eh diferente do esperado.");
+			}
+		}
+	}
 }
 
 //<RelOp> = “=” | “!” | “>” | “<” | “<=” | “>=”
