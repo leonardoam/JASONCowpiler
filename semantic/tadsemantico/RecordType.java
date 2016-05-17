@@ -29,7 +29,8 @@ public class RecordType implements Type {
 
     @Override
     public Object get(String field) {
-        switch(field.toUpperCase()){
+        field = field.toUpperCase();
+        switch(field){
             case "NBYTES":
                 return this.nbytes;
             default:

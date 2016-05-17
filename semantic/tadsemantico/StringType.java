@@ -18,6 +18,10 @@ public class StringType implements Type {
 
     @Override
     public Object get(String field) {
-        return new Integer(nbytes);
+        if(field.toUpperCase().equals("NBYTES")){
+            return this.nbytes;
+        }else{
+            return null;
+        }
     }
 }
