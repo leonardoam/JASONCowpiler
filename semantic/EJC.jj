@@ -156,9 +156,9 @@ void start():
 
 //<Program> = <Header> <DeclSec> <Block>"."
 void Program():
-{}
+{Token t;}
 {
-	Header() DeclSec() Block()<DOT>
+	Header() DeclSec() Block()t=<DOT>
 	//Java code
 	{
 		st.removeLevel();
@@ -838,4 +838,3 @@ void Argument():
 	   {System.out.printf("@(%d,%d)\t<EOF>\t-\t%s\n", t.beginLine, t.beginColumn, t);}
 }
 */
-

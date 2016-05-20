@@ -30,6 +30,7 @@ public class SymbolTable {
     {
         levels.add(new HashMap());
         currentLevel++;
+        
     }
     
     public void removeLevel()
@@ -37,7 +38,7 @@ public class SymbolTable {
         if(currentLevel < 0)
             return;
         
-        levels.remove(currentLevel);
+        levels.remove(levels.get(currentLevel));
         currentLevel--;
     }
     
