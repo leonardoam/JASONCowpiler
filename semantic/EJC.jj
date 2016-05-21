@@ -710,7 +710,11 @@ void Variable(boolean recursion, Symbol field):
 			Symbol s = st.search(t.image.toString());
 			field = s;
 			
-			field = (Symbol) s.getType().get("ELEMTYPE");//s eh do tipo Variable
+			if(s == null || s.getType() == null){
+				field = null;
+			}else{
+				field = (Symbol) s.getType().get("ELEMTYPE");//s eh do tipo Variable
+			}
 
 			while(field != null && (field.getTypeName().equals("TYPE") || field.getTypeName().equals("ARRAY"))){
 				field = (Symbol) field.getType().get("ELEMTYPE");
