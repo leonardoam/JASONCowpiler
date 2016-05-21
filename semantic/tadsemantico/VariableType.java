@@ -17,7 +17,10 @@ class VariableType implements Type {
         switch(field.toUpperCase()){
             case "ELEMTYPE":
                 this.elemType = (Symbol) value;
-                this.nbytes = (Integer) elemType.getType().get("nbytes");
+                if(elemType == null || elemType.getType() == null)
+                    this.nbytes = 0;
+                else
+                    this.nbytes = (Integer) elemType.getType().get("nbytes");
                 return true;
         }
         return false;

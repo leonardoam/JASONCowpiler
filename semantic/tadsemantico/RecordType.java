@@ -21,9 +21,13 @@ public class RecordType implements Type {
             return false;
         }
         fields.put(field, value);
-        Type t = ((Symbol)value).getType();
-        if(t.get("nbytes") != null)
-            this.nbytes = ((this.nbytes == null)? (Integer)t.get("nbytes") : this.nbytes + (Integer)t.get("nbytes"));
+        if(value == null){
+            this.nbytes = 0;
+        }else{
+            Type t = ((Symbol)value).getType();
+            if(t.get("nbytes") != null)
+                this.nbytes = ((this.nbytes == null)? (Integer)t.get("nbytes") : this.nbytes + (Integer)t.get("nbytes"));
+        }
         return true;
     }
 
