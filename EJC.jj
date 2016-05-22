@@ -156,23 +156,23 @@ void start():
 
 //<Program> = <Header> <DeclSec> <Block>"."
 void Program():
-{}
+{Token t;}
 {
-	Header() DeclSec() Block()<DOT>
+	Header() DeclSec() Block()t=<DOT>
 	//Java code
 	{
 		st.removeLevel();
 	}
 }
 
-//<Header> = ìprogramî ìidentifierî ì;î
+//<Header> = ‚Äúprogram‚Äù ‚Äúidentifier‚Äù ‚Äú;‚Äù
 void Header():
 {}
 {
 	<PROGRAM> <IDENTIFIER> <SEMICOLON>
 }
 
-//<Block> = ìbeginî <Statements> ìendî
+//<Block> = ‚Äúbegin‚Äù <Statements> ‚Äúend‚Äù
 void Block():
 {}
 {
@@ -186,7 +186,7 @@ void DeclSec():
 	TypeDeclSec() VarDeclSec() SubProgramDecls()
 }
 
-//<TypeDeclSec> = [ìtypesî <TypeDecls>]
+//<TypeDeclSec> = [‚Äútypes‚Äù <TypeDecls>]
 void TypeDeclSec():
 {}
 {
@@ -200,48 +200,52 @@ void TypeDecls():
 	TypeDecl()(TypeDecl())*
 }
 
-//<TypeDecl> = ìidentifierî <TypeSpecification>
+//<TypeDecl> = ‚Äúidentifier‚Äù <TypeSpecification>
 void TypeDecl():
 {
 	Token t;
+	Boolean correctDefinition;
 }
 {
 	t = <IDENTIFIER>
+	correctDefinition = TypeSpecification(t)
 	//Java code
 	{
-		String str = t.image.toString();
-		if(!st.addSymbol(str, "TYPE")){
-			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tTipo "+t.image.toString()+" ja foi definido nesse contexto.");
+		if(!correctDefinition){
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tErro na declaracao do tipo "+t.image.toString()+".");
 		}
 	}
-	TypeSpecification(str)
 }
 
 //<TypeSpecification> = <ArraySpecification> | <RecordSpecification>
-void TypeSpecification(String typeName):
-{}
+boolean TypeSpecification(Token typeToken):
 {
-	ArraySpecification(typeName) | 
-	RecordSpecification(typeName)
+	Boolean isCorrect;
+}
+{
+	isCorrect = ArraySpecification(typeToken) {return isCorrect;} //Java code
+	| isCorrect = RecordSpecification(typeToken) {return isCorrect;} //Java code
 }
 
-//<ArraySpecification> = ìarrayî <DataType> ì[î <NumericLiteral> î]î ";"
-void ArraySpecification(String typeName):
+//<ArraySpecification> = ‚Äúarray‚Äù <DataType> ‚Äú[‚Äù <NumericLiteral> ‚Äù]‚Äù ";"
+boolean ArraySpecification(Token typeToken):
 {
 	Token t;
+	Boolean isCorrect;
 }
 {
 	<ARRAY> t = DataType() 
 	//Java code
 	{
-            String arrayName = "ARRAY_"+array_counter;    
+            String arrayName = "ARRAY"+array_counter;    
 			st.addSymbol(arrayName, "ARRAY");
 			Symbol s = st.search(t.image.toString());
-			if(s == null || (!s.getTypeName().equals("TYPE") && !s.getTypeName().equals("REAL") && !s.getTypeName().equals("STRING") && !s.getTypeName().equals("INTEGER")))
+			if(s == null || (!s.getTypeName().equals("TYPE") && !s.getTypeName().equals("REAL") && !s.getTypeName().equals("STRING") && !s.getTypeName().equals("INTEGER"))){
 				//System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tTipo "+t.image.toString()+" nao definido.");
-			;
-            else{ 
+				isCorrect = false;
+			}else{ 
 				st.search(arrayName).getType().set("ELEMTYPE", s);
+				isCorrect = true;
 			}
             array_counter++;
 		
@@ -253,35 +257,54 @@ void ArraySpecification(String typeName):
 		try{
 			size = Integer.parseInt(t.image.toString());
 		}catch(Exception e){
+			isCorrect = false;
 		}
 		st.search(arrayName).getType().set("size", size);
-		st.search(typeName).getType().set("ELEMTYPE", st.search(arrayName));
+		boolean result = st.isSet(typeToken.image.toString());
+		if(isCorrect && result){
+			System.out.println("Erro semantico na linha "+typeToken.beginLine+", coluna "+typeToken.beginColumn+".\n\tTipo "+typeToken.image.toString()+" ja foi definido nesse contexto.");
+		}else if(isCorrect){
+			st.addSymbol(typeToken.image.toString(), "TYPE");
+			st.search(typeToken.image.toString()).getType().set("ELEMTYPE", st.search(arrayName));
+		}
 	}
 	<RSQ_BRACK><SEMICOLON>
+	//Java code
+	{return isCorrect;}
 }
 
 
-//<RecordSpecification> = ìrecordî <VarDecls> ìendî ì;î
-void RecordSpecification(String typeName):
+//<RecordSpecification> = ‚Äúrecord‚Äù <VarDecls> ‚Äúend‚Äù ‚Äú;‚Äù
+boolean RecordSpecification(Token typeToken):
 {
+	Boolean isCorrect;
 }
 {
 	<RECORD> 
 	//Java code
 	{
-            String recordName = "RECORD_"+record_counter;    
+			String typeName = typeToken.image.toString();
+            String recordName = "RECORD"+record_counter;    
 			st.addSymbol(recordName, "RECORD");
 	}
-	VarDecls(true) 
+	isCorrect = VarDecls(true) 
 	//Java code
 	{
 			record_counter++;
-            st.search(typeName).getType().set("ELEMTYPE", st.search(recordName));
+			boolean result = st.isSet(typeName);
+			if(isCorrect && result){
+				System.out.println("Erro semantico na linha "+typeToken.beginLine+", coluna "+typeToken.beginColumn+".\n\tTipo "+typeToken.image.toString()+" ja foi definido nesse contexto.");
+			}else if(isCorrect){
+				st.addSymbol(typeName, "TYPE");
+				st.search(typeName).getType().set("ELEMTYPE", st.search(recordName));
+			}
 	}
 	<END><SEMICOLON>
+	//Java code
+	{return isCorrect;}
 }
 
-//<VarDeclSec> = [ìvariablesî <VarDecls>]
+//<VarDeclSec> = [‚Äúvariables‚Äù <VarDecls>]
 void VarDeclSec():
 {}
 {
@@ -289,23 +312,40 @@ void VarDeclSec():
 }
 
 //<VarDecls> = <VarDecl> {<VarDecl>}
-void VarDecls(boolean comingFromRecordSpec):
-{}
+boolean VarDecls(boolean comingFromRecordSpec):
 {
-	VarDecl(comingFromRecordSpec) (VarDecl(comingFromRecordSpec))*
+	Boolean isCorrect = true;
+	Boolean temp = false;
+}
+{
+	temp = VarDecl(comingFromRecordSpec)
+	//Java code
+	{isCorrect = isCorrect && temp;}
+	(
+		temp = VarDecl(comingFromRecordSpec)
+		//Java code
+		{isCorrect = isCorrect && temp;}
+	
+	)*
+	
+	//Java code
+	{return isCorrect;}
 }
 
-//<VarDecl> = <DataType> <IdList> ì;î
-void VarDecl(boolean comingFromRecordSpec):
+//<VarDecl> = <DataType> <IdList> ‚Äú;‚Äù
+boolean VarDecl(boolean comingFromRecordSpec):
 {
 	Token t;
+	Boolean isCorrect;
 }
 {
 	t = DataType() 
-	IdList(t, comingFromRecordSpec) <SEMICOLON>
+	isCorrect = IdList(t, comingFromRecordSpec) <SEMICOLON>
+	//Java code
+	{return isCorrect;}
 }
 
-//<DataType> = ìrealî | ìintegerî | <Identifier> | <String>
+//<DataType> = ‚Äúreal‚Äù | ‚Äúinteger‚Äù | <Identifier> | <String>
 Token DataType():
 {
 	Token t;
@@ -324,8 +364,10 @@ Token DataType():
 	{return t;}
 }
 
-void addRecordField(Token datatype, Token identifier, boolean comingFromRecordSpec):
-{}
+boolean addRecordField(Token datatype, Token identifier, boolean comingFromRecordSpec):
+{
+	Boolean isCorrect = true;
+}
 {	//Java code
 	{
 		if(comingFromRecordSpec){
@@ -333,7 +375,10 @@ void addRecordField(Token datatype, Token identifier, boolean comingFromRecordSp
 				boolean result = st.search("RECORD"+record_counter).getType().set(identifier.image.toString(), st.search(datatype.image.toString()));
 				if(!result){
 					System.out.println("Erro semantico na linha "+identifier.beginLine+", coluna "+identifier.beginColumn+".\n\tCampo "+identifier.image.toString()+" duplicado.");
+					isCorrect = false;
 				}			
+			}else{
+				isCorrect = false;
 			}
 		}else if(st.isSet(identifier.image.toString())){
 			System.out.println("Erro semantico na linha "+identifier.beginLine+", coluna "+identifier.beginColumn+".\n\tIdentificador "+identifier.image.toString()+" duplicado.");
@@ -341,28 +386,35 @@ void addRecordField(Token datatype, Token identifier, boolean comingFromRecordSp
 			st.addSymbol(identifier.image.toString(), "VARIABLE");
 			st.search(identifier.image.toString()).getType().set("ELEMTYPE", st.search(datatype.image.toString()));
 		}
+		return isCorrect;
 	}
 }
 
-//<IdList> = <Identifier> {ì,î <Identifier>}
-void IdList(Token datatype, boolean comingFromRecordSpec):
+//<IdList> = <Identifier> {‚Äú,‚Äù <Identifier>}
+boolean IdList(Token datatype, boolean comingFromRecordSpec):
 {
-		Token t;
+	Token t;
+	Boolean isCorrect = true;
+	Boolean temp = false;
 }
 {
 	t = <IDENTIFIER>
 	//Java code
 	{
-			addRecordField(datatype, t, comingFromRecordSpec);
+		temp = addRecordField(datatype, t, comingFromRecordSpec);
+		isCorrect = isCorrect && temp;
 	}
 	(
 		<COMMA>
 		t = <IDENTIFIER>
 		//Java code
 		{
-				addRecordField(datatype, t, comingFromRecordSpec);
+			temp = addRecordField(datatype, t, comingFromRecordSpec);
+			isCorrect = isCorrect && temp;
 		}
 	)*
+	//Java code
+	{return isCorrect;}
 }
 
 //<SubProgramDecls> = {<SubProgramDecl>}
@@ -383,7 +435,7 @@ void SubProgramDecl():
 	}
 }
 
-//<ProcDecl> = <ProcHeader> <SubProgramDeclSec> <Block> ì;î
+//<ProcDecl> = <ProcHeader> <SubProgramDeclSec> <Block> ‚Äú;‚Äù
 void ProcDecl():
 {
 	String procName;
@@ -392,7 +444,7 @@ void ProcDecl():
 	procName = ProcHeader() SubProgramDeclSec(procName) Block() <SEMICOLON>
 }
 
-//<ProcHeader> = ìprocedureî <Identifier> ì;î
+//<ProcHeader> = ‚Äúprocedure‚Äù <Identifier> ‚Äú;‚Äù
 String ProcHeader():
 {
 	Token t;
@@ -424,7 +476,7 @@ void SubProgramDeclSec(String subProgramName):
 	DeclSec()
 }
 
-//<ParamDeclSec> = [ìparametersî <ParamDecls>]
+//<ParamDeclSec> = [‚Äúparameters‚Äù <ParamDecls>]
 int ParamDeclSec():
 {
 	int nparams = 0;
@@ -479,7 +531,7 @@ int ParamDecl(int nparams):
 	}
 }
 
-//<FunctionDecl> = <FunctionHeader> <SubProgramDeclSec> <FunctionBlock> ì;î
+//<FunctionDecl> = <FunctionHeader> <SubProgramDeclSec> <FunctionBlock> ‚Äú;‚Äù
 void FunctionDecl():
 {
 	String funcName;
@@ -488,7 +540,7 @@ void FunctionDecl():
 	funcName = FunctionHeader() SubProgramDeclSec(funcName) FunctionBlock() <SEMICOLON>
 }
 
-//<FunctionHeader> = ìfunctionî <Identifier> ìreturnsî <DataType>;
+//<FunctionHeader> = ‚Äúfunction‚Äù <Identifier> ‚Äúreturns‚Äù <DataType>;
 String FunctionHeader():
 {
 	Token t;
@@ -510,14 +562,14 @@ String FunctionHeader():
 }
 
 //modificado pra resolver ambiguidade
-//<FunctionBlock> = ìbeginî <SpecialStatements> ìendî
+//<FunctionBlock> = ‚Äúbegin‚Äù <SpecialStatements> ‚Äúend‚Äù
 void FunctionBlock():
 {}
 {
 	<BEGIN> SpecialStatements() <END>
 }
 
-//<Statements> = <Statement> { ì;î<Statement>}
+//<Statements> = <Statement> { ‚Äú;‚Äù<Statement>}
 void Statements():
 {}
 {
@@ -525,20 +577,20 @@ void Statements():
 }
 
 //criado para resolver a ambiguidade com ReturnStatement
-//<SpecialStatements> = <Statement>ì;î{<Statement>ì;î}<ReturnStatement>
+//<SpecialStatements> = <Statement>‚Äú;‚Äù{<Statement>‚Äú;‚Äù}<ReturnStatement>
 void SpecialStatements():
 {}
 {
 	(LOOKAHEAD(2)Statement()<SEMICOLON>)+ReturnStatement()
 }
 
-//<Statement> = [ìreadî <Variable> 
-	//| ìsetî <Variable> ì=î <Expression> 
-	//| ìwriteî <Variable>
-	//| ìifî <Condition> ìthenî <Statements> <ElseClause>
-	//| ìwhileî <Condition> ìdoî <Statements>  ìendwhileî
-	//| ìuntilî <Condition> "do" <Statements> ìenduntilî
-	//| ìcallî <IDENTIFIER> <ArgList> ]
+//<Statement> = [‚Äúread‚Äù <Variable> 
+	//| ‚Äúset‚Äù <Variable> ‚Äú=‚Äù <Expression> 
+	//| ‚Äúwrite‚Äù <Variable>
+	//| ‚Äúif‚Äù <Condition> ‚Äúthen‚Äù <Statements> <ElseClause>
+	//| ‚Äúwhile‚Äù <Condition> ‚Äúdo‚Äù <Statements>  ‚Äúendwhile‚Äù
+	//| ‚Äúuntil‚Äù <Condition> "do" <Statements> ‚Äúenduntil‚Äù
+	//| ‚Äúcall‚Äù <IDENTIFIER> <ArgList> ]
 void Statement():
 {
 	Token t;
@@ -567,22 +619,22 @@ void Statement():
 	)?
 }
 	
-//<ElseClause> = [ìelseî <Statements>] ìendifî 
+//<ElseClause> = [‚Äúelse‚Äù <Statements>] ‚Äúendif‚Äù 
 void ElseClause():
 {}
 {
 	(<ELSE> Statements())? <ENDIF>
 }
 
-//tiramos o ; como parte da resoluÁ„o da ambiguidade com statement
-//<ReturnStatement> = ì;î ìreturnî ì(î <Condition> ì)î
+//tiramos o ; como parte da resolu√ß√£o da ambiguidade com statement
+//<ReturnStatement> = ‚Äú;‚Äù ‚Äúreturn‚Äù ‚Äú(‚Äù <Condition> ‚Äú)‚Äù
 void ReturnStatement():
 {}
 {
 	<RETURN><LPAR>Condition()<RPAR>
 }
 
-//<ArgList> = [ì(î <Arguments> ì)î ]
+//<ArgList> = [‚Äú(‚Äù <Arguments> ‚Äú)‚Äù ]
 int ArgList():
 {
 	int nparams = 0;
@@ -595,7 +647,7 @@ int ArgList():
 }
 
 //usado para resolver ambiguidade entre variable e chamada de funcao
-//<ArgListSpecial> = ì(î <Arguments> ì)î 
+//<ArgListSpecial> = ‚Äú(‚Äù <Arguments> ‚Äú)‚Äù 
 int ArgListSpecial():
 {
 	int nparams = 0;
@@ -608,7 +660,7 @@ int ArgListSpecial():
 	}
 }
 
-//<Arguments> = <Argument> {ì,î <Argument>}
+//<Arguments> = <Argument> {‚Äú,‚Äù <Argument>}
 int Arguments():
 {
 	int nparams = 0;
@@ -625,14 +677,14 @@ int Arguments():
 	}
 }
 
-//<Condition> = <CompoundCondition> {ì\î <CompoundCondition>}
+//<Condition> = <CompoundCondition> {‚Äú\‚Äù <CompoundCondition>}
 void Condition():
 {}
 {
 	CompoundCondition() (<OR> CompoundCondition())*
 }
 
-//<CompoundCondition> =<SimpleCondition> {ì&î <SimpleCondition>}
+//<CompoundCondition> =<SimpleCondition> {‚Äú&‚Äù <SimpleCondition>}
 void CompoundCondition():
 {}
 {
@@ -660,7 +712,7 @@ void Term():
 	Unary() (MultOp() Unary())*
 }
 
-//<Unary> = {(ì+î | î-î)} <Factor>
+//<Unary> = {(‚Äú+‚Äù | ‚Äù-‚Äù)} <Factor>
 void Unary():
 {}
 {
@@ -668,7 +720,7 @@ void Unary():
 }
 
 //tambem modificado para remover ambiguidade entre variable e chamada de funcao
-//<Factor> = <Identifier> <ArgListSpecial> | <NumericLiteral> | <StringLiteral> | ì~î<Factor> | ì(î <Condition> ì)î | <Variable>
+//<Factor> = <Identifier> <ArgListSpecial> | <NumericLiteral> | <StringLiteral> | ‚Äú~‚Äù<Factor> | ‚Äú(‚Äù <Condition> ‚Äú)‚Äù | <Variable>
 void Factor():
 {
 	Token t;
@@ -697,7 +749,7 @@ void Factor():
 	Variable(false, o)
 }
 
-//<Variable> = <Identifier> [ì[î <Expression> ì]î]{ì.î<Variable>}
+//<Variable> = <Identifier> [‚Äú[‚Äù <Expression> ‚Äú]‚Äù]{‚Äú.‚Äù<Variable>}
 void Variable(boolean recursion, Symbol field):
 {
 	Token t;
@@ -710,21 +762,18 @@ void Variable(boolean recursion, Symbol field):
 			Symbol s = st.search(t.image.toString());
 			field = s;
 			
-			if(s == null){
-				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\t"+t.image.toString()+" nao foi definido.");
-			}else if(s.getType() == null){
-				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tImpossivel acessar "+t.image.toString()+", erro na definicao.");
+			if(s == null || s.getType() == null){
 				field = null;
 			}else{
 				field = (Symbol) s.getType().get("ELEMTYPE");//s eh do tipo Variable
+			}
 
-				while(field != null && (field.getTypeName().equals("TYPE") || field.getTypeName().equals("ARRAY"))){
-					field = (Symbol) field.getType().get("ELEMTYPE");
-				}
+			while(field != null && (field.getTypeName().equals("TYPE") || field.getTypeName().equals("ARRAY"))){
+				field = (Symbol) field.getType().get("ELEMTYPE");
 			}
 			
 			if(s == null){
-				;//System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\t"+t.image.toString()+" nao foi definido.");
+				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\t"+t.image.toString()+" nao foi definido.");
 			}else if(!s.getTypeName().equals("VARIABLE") && !s.getTypeName().equals("PARAM") && !s.getTypeName().equals("FUNCTION")){
 				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\t"+t.image.toString()+" nao pode ser usado nesse contexto.\n\tEsperado:\n\tFuncao, parametro ou variavel.");
 			}else if(s.getTypeName().equals("FUNCTION") && !s.getType().get("NPARAMS").equals(0)){
@@ -749,21 +798,21 @@ void Variable(boolean recursion, Symbol field):
 	(<LSQ_BRACK>Expression()<RSQ_BRACK>)?(LOOKAHEAD(2)<DOT>Variable(true, field))*
 }
 
-//<RelOp> = ì=î | ì!î | ì>î | ì<î | ì<=î | ì>=î
+//<RelOp> = ‚Äú=‚Äù | ‚Äú!‚Äù | ‚Äú>‚Äù | ‚Äú<‚Äù | ‚Äú<=‚Äù | ‚Äú>=‚Äù
 void RelOp():
 {}
 {
 	<EQUAL> | <DIFF> | LOOKAHEAD(2) <GTE> | LOOKAHEAD(2)<LTE> | <GT> | <LT>
 }
 
-//<AddOp> = ì+î | ì-î
+//<AddOp> = ‚Äú+‚Äù | ‚Äú-‚Äù
 void AddOp():
 {}
 {
 	<PLUS> | <MINUS>
 }
 
-//<MultOp> = ì*î | ì/î
+//<MultOp> = ‚Äú*‚Äù | ‚Äú/‚Äù
 void MultOp():
 {}
 {
@@ -845,4 +894,3 @@ void Argument():
 	   {System.out.printf("@(%d,%d)\t<EOF>\t-\t%s\n", t.beginLine, t.beginColumn, t);}
 }
 */
-
