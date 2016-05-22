@@ -9,6 +9,9 @@ public class EJC{
 	public final static SymbolTable st = new SymbolTable();
 	public static int array_counter = 0;
 	public static int record_counter = 0;
+	public static final int MAX_ID_LENGTH = 128;
+	public static final int MAX_STR_LENGTH = 256;
+	public static final int MAX_NUM_SIZE = 9;
 	
     public static void main(String[] args) throws ParseException, TokenMgrError{
         EJC EJC = new EJC(System.in);
@@ -114,7 +117,8 @@ TOKEN:
 	//Java code
 	{ 
 		String[] strs = image.toString().split("\\.");
-		if(strs[0].length() > 9 || strs[1].length() > 9){
+		
+		if(strs[0].length() > EJC.MAX_NUM_SIZE || strs[1].length() > EJC.MAX_NUM_SIZE){
 			System.out.println("Erro semantico na linha "+input_stream.getBeginLine()+", coluna "+input_stream.getBeginColumn()+".\n\tLimite do numero de digitos excedido.");
 		}
 	}|
@@ -122,7 +126,7 @@ TOKEN:
 	//Java code
 	{ 
 		String str = image.toString();
-		if(str.length() > 9){
+		if(str.length() > EJC.MAX_NUM_SIZE){
 			System.out.println("Erro semantico na linha "+input_stream.getBeginLine()+", coluna "+input_stream.getBeginColumn()+".\n\tLimite do numero de digitos excedido.");
 		}
 	}|
@@ -132,7 +136,7 @@ TOKEN:
 	//Java code
 	{ 
 		str = image.toString();
-		if(str.length() > 128){
+		if(str.length() > EJC.MAX_ID_LENGTH){
 			System.out.println("Erro semantico na linha "+input_stream.getBeginLine()+", coluna "+input_stream.getBeginColumn()+".\n\tTamanho maximo para identificador excedido.");
 		}
 	}|
@@ -142,7 +146,7 @@ TOKEN:
 	//Java code
 	{ 
 		str = image.toString();
-		if(str.length() > 256){
+		if(str.length() > EJC.MAX_STR_LENGTH){
 			System.out.println("Erro semantico na linha "+input_stream.getBeginLine()+", coluna "+input_stream.getBeginColumn()+".\n\tLimite do numero de caracteres excedido.");
 		}
 	}
@@ -211,7 +215,7 @@ void TypeDecl():
 	correctDefinition = TypeSpecification(t)
 	//Java code
 	{
-		if(!correctDefinition){
+		if(!correctDefinition || t.image.toString().length() > MAX_ID_LENGTH){
 			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tErro na declaracao do tipo "+t.image.toString()+".");
 		}
 	}
@@ -263,7 +267,9 @@ boolean ArraySpecification(Token typeToken):
 		boolean result = st.isSet(typeToken.image.toString());
 		if(isCorrect && result){
 			System.out.println("Erro semantico na linha "+typeToken.beginLine+", coluna "+typeToken.beginColumn+".\n\tTipo "+typeToken.image.toString()+" ja foi definido nesse contexto.");
-		}else if(isCorrect){
+		}else if(t.image.toString().length() > MAX_NUM_SIZE){
+			isCorrect = false;
+		}else if(isCorrect && typeToken.image.toString().length() <= MAX_ID_LENGTH){
 			st.addSymbol(typeToken.image.toString(), "TYPE");
 			st.search(typeToken.image.toString()).getType().set("ELEMTYPE", st.search(arrayName));
 		}
@@ -294,7 +300,7 @@ boolean RecordSpecification(Token typeToken):
 			boolean result = st.isSet(typeName);
 			if(isCorrect && result){
 				System.out.println("Erro semantico na linha "+typeToken.beginLine+", coluna "+typeToken.beginColumn+".\n\tTipo "+typeToken.image.toString()+" ja foi definido nesse contexto.");
-			}else if(isCorrect){
+			}else if(isCorrect && typeName.length() <= MAX_ID_LENGTH){
 				st.addSymbol(typeName, "TYPE");
 				st.search(typeName).getType().set("ELEMTYPE", st.search(recordName));
 			}
@@ -382,6 +388,8 @@ boolean addRecordField(Token datatype, Token identifier, boolean comingFromRecor
 			}
 		}else if(st.isSet(identifier.image.toString())){
 			System.out.println("Erro semantico na linha "+identifier.beginLine+", coluna "+identifier.beginColumn+".\n\tIdentificador "+identifier.image.toString()+" duplicado.");
+		}else if(identifier.image.toString().length() > MAX_ID_LENGTH){
+			System.out.println("Erro semantico na linha "+identifier.beginLine+", coluna "+identifier.beginColumn+".\n\tErro na definicao de "+identifier.image.toString()+".");
 		}else{
 			st.addSymbol(identifier.image.toString(), "VARIABLE");
 			st.search(identifier.image.toString()).getType().set("ELEMTYPE", st.search(datatype.image.toString()));
@@ -454,7 +462,9 @@ String ProcHeader():
 	//Java code
 	{
 		String procName = t.image.toString();
-		if(!st.addSymbol(procName, "PROCEDURE")){
+		if(procName.length() > MAX_ID_LENGTH){
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tErro na definicao do procedimento "+t.image.toString()+".");
+		}else if(!st.addSymbol(procName, "PROCEDURE")){
 			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tIdentificador "+t.image.toString()+" ja foi definido nesse contexto.");
 		}
 		st.addLevel();
@@ -520,7 +530,9 @@ int ParamDecl(int nparams):
 	datatype = DataType() identifier = <IDENTIFIER> <SEMICOLON>
 	//Java code
 	{
-		if(!st.addSymbol(identifier.image.toString(), "PARAM")){
+		if(identifier.image.toString().length() > MAX_ID_LENGTH){
+			System.out.println("Erro semantico na linha "+identifier.beginLine+", coluna "+identifier.beginColumn+".\n\tErro na definicao do parametro "+identifier.image.toString()+".");
+		}else if(!st.addSymbol(identifier.image.toString(), "PARAM")){
 			System.out.println("Erro semantico na linha "+identifier.beginLine+", coluna "+identifier.beginColumn+".\n\tIdentificador "+identifier.image.toString()+" ja foi definido nesse contexto.");
 		}else{
 			Type t = st.search(identifier.image.toString()).getType();
@@ -551,7 +563,9 @@ String FunctionHeader():
 	//Java code
 	{
 		String funcName = t.image.toString();
-		if(!st.addSymbol(funcName, "FUNCTION")){
+		if(funcName.length() > MAX_ID_LENGTH){
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tErro na definicao da funcao "+t.image.toString()+".");	
+		}else if(!st.addSymbol(funcName, "FUNCTION")){
 			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tIdentificador "+t.image.toString()+" ja foi definido nesse contexto.");
 		}else{
 			st.search(funcName).getType().set("RTYPE", st.search(returnType.image.toString()));
