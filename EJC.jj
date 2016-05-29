@@ -208,14 +208,14 @@ void TypeDecls():
 void TypeDecl():
 {
 	Token t;
-	Boolean correctDefinition;
+	Boolean correctSpecification;
 }
 {
 	t = <IDENTIFIER>
-	correctDefinition = TypeSpecification(t)
+	correctSpecification = TypeSpecification(t)
 	//Java code
 	{
-		if(!correctDefinition || t.image.toString().length() > MAX_ID_LENGTH){
+		if(!correctSpecification || t.image.toString().length() > MAX_ID_LENGTH){
 			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tErro na declaracao do tipo "+t.image.toString()+".");
 		}
 	}
@@ -254,7 +254,7 @@ boolean ArraySpecification(Token typeToken):
             array_counter++;
 		
 	}
-	<LSQ_BRACK> t = <INT>
+	<LSQ_BRACK> t = <INT> <RSQ_BRACK><SEMICOLON>
 	//Java code
 	{       //only if the array exists (check the code above!)
 		int size = 0;
@@ -273,10 +273,9 @@ boolean ArraySpecification(Token typeToken):
 			st.addSymbol(typeToken.image.toString(), "TYPE");
 			st.search(typeToken.image.toString()).getType().set("ELEMTYPE", st.search(arrayName));
 		}
+		
+		return isCorrect;
 	}
-	<RSQ_BRACK><SEMICOLON>
-	//Java code
-	{return isCorrect;}
 }
 
 
@@ -293,7 +292,7 @@ boolean RecordSpecification(Token typeToken):
             String recordName = "RECORD"+record_counter;    
 			st.addSymbol(recordName, "RECORD");
 	}
-	isCorrect = VarDecls(true) 
+	isCorrect = VarDecls(true) <END><SEMICOLON>
 	//Java code
 	{
 			record_counter++;
@@ -304,10 +303,8 @@ boolean RecordSpecification(Token typeToken):
 				st.addSymbol(typeName, "TYPE");
 				st.search(typeName).getType().set("ELEMTYPE", st.search(recordName));
 			}
+		return isCorrect;
 	}
-	<END><SEMICOLON>
-	//Java code
-	{return isCorrect;}
 }
 
 //<VarDeclSec> = [“variables” <VarDecls>]
