@@ -595,6 +595,19 @@ void SpecialStatements():
 	(LOOKAHEAD(2)Statement()<SEMICOLON>)+ReturnStatement()
 }
 
+
+void printReadWriteError(String varType, Token t):
+{}
+{
+	/*Java code*/
+	{
+		if(varType == null)
+			varType = "_NULO_";
+		if((!varType.equals("STRING") && !varType.equals("INTEGER") && !varType.equals("REAL")))
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+". Tipo invalido para operacao de leitura ou escrita.\n\tEsperado: STRING, INTEGER ou REAL\n\tEncontrado: "+varType);
+	}
+}
+
 //<Statement> = [“read” <Variable> 
 	//| “set” <Variable> “=” <Expression> 
 	//| “write” <Variable>
@@ -607,11 +620,12 @@ void Statement():
 	Token t;
 	int nparams;
 	Symbol o = null;
+	String varType, exprType, condType; 
 }
 {
-	(<READ> Variable(false, o) |
-	<SET> Variable(false, o) <EQUAL> Expression() |
-	<WRITE> Variable(false, o) |
+	(t = <READ> varType = Variable(false, o) {printReadWriteError(varType, t);}/*Java code*/|
+	<SET> varType = Variable(false, o) <EQUAL> Expression() |
+	t = <WRITE> varType = Variable(false, o) {printReadWriteError(varType, t);}/*Java code*/|
 	<IF> Condition() <THEN> Statements() ElseClause() |
 	<WHILE> Condition() <DO> Statements() <ENDWHILE> |
 	<UNTIL> Condition() <DO> Statements() <ENDUNTIL> |
@@ -689,86 +703,295 @@ int Arguments():
 }
 
 //<Condition> = <CompoundCondition> {“\” <CompoundCondition>}
-void Condition():
-{}
+String Condition():
 {
-	CompoundCondition() (<OR> CompoundCondition())*
+	String operand1;
+	String operand2;
+	Token t = null;
+	boolean allInteger = true;
+	boolean hasError = false;
+}
+{
+	operand1 = CompoundCondition() 
+	(
+		t = <OR> operand2 = CompoundCondition()
+		
+		//Java code
+		{
+			if(printArithmeticOrRelationalOperandError(operand2, t)){
+				hasError = true;
+			}else if(!operand2.equals("INTEGER")){
+				allInteger = false;
+			}
+		}
+	)*
+	
+	//Java code
+	{
+		if(operand1!= null && !operand1.equals("INTEGER"))
+			allInteger = false;
+		if(t == null)
+			return operand1;
+		else if(printArithmeticOrRelationalOperandError(operand1, t))
+			return null;
+		else if(!hasError && allInteger)
+			return "INTEGER";
+		else if(!hasError)
+			return "REAL";
+		else
+			return null;
+	}
 }
 
 //<CompoundCondition> =<SimpleCondition> {“&” <SimpleCondition>}
-void CompoundCondition():
-{}
+String CompoundCondition():
 {
-	SimpleCondition() (<AND> SimpleCondition())*
+	String operand1;
+	String operand2;
+	Token t = null;
+	boolean allInteger = true;
+	boolean hasError = false;
+}
+{
+	operand1 = SimpleCondition() 
+	(
+		t = <AND> operand2 = SimpleCondition()
+		
+		//Java code
+		{
+			if(printArithmeticOrRelationalOperandError(operand2, t)){
+				hasError = true;
+			}else if(!operand2.equals("INTEGER")){
+				allInteger = false;
+			}
+		}
+	)*
+	
+	//Java code
+	{
+		if(operand1!= null && !operand1.equals("INTEGER"))
+			allInteger = false;
+		if(t == null)
+			return operand1;
+		else if(printArithmeticOrRelationalOperandError(operand1, t))
+			return null;
+		else if(!hasError && allInteger)
+			return "INTEGER";
+		else if(!hasError)
+			return "REAL";
+		else
+			return null;
+	}
 }
 
 //<SimpleCondition> = <Expression> [<RelOp> <Expression>] 
-void SimpleCondition():
-{}
+String SimpleCondition():
 {
-	Expression() (RelOp() Expression())?
+	String operand1;
+	String operand2 = null;
+	Token t = null;
+}
+{
+	operand1 = Expression()( t = RelOp() operand2 = Expression())?
+	//Java code
+	{
+		if(t == null)
+			return operand1;
+		else if(printArithmeticOrRelationalOperandError(operand1, t) 
+					|| printArithmeticOrRelationalOperandError(operand2, t))
+			return null;
+		else if(!operand1.equals("INTEGER") || !operand2.equals("INTEGER"))
+			return "REAL";
+		else
+			return "INTEGER";
+	}
 }
 
 //<Expression> =  <Term> {<AddOp> <Term>} 
-void Expression():
-{}
+String Expression():
 {
-	Term() (AddOp() Term())*
+	String operand1;
+	String operand2;
+	Token t = null;
+	boolean allInteger = true;
+	boolean hasError = false;
+}
+{
+	operand1 = Term() 
+	(
+		t = AddOp() operand2 = Term()
+		//Java code
+		{
+			if(printArithmeticOrRelationalOperandError(operand2, t)){
+				hasError = true;
+			}else if(!operand2.equals("INTEGER")){
+				allInteger = false;
+			}
+		}
+	)*
+	
+	//Java code
+	{
+		if(operand1!= null && !operand1.equals("INTEGER"))
+			allInteger = false;
+		if(t == null)
+			return operand1;
+		else if(printArithmeticOrRelationalOperandError(operand1, t))
+			return null;
+		else if(!hasError && allInteger)
+			return "INTEGER";
+		else if(!hasError)
+			return "REAL";
+		else
+			return null;
+	}
 }
 
 //<Term> =  <Unary> {<MultiOP> <Unary>}
-void Term():
+String Term():
+{
+	String operand1;
+	String operand2;
+	Token t = null;
+	boolean allInteger = true;
+	boolean hasError = false;
+}
+{
+	operand1 = Unary() 
+	(
+		t = MultOp() operand2 = Unary()
+		//Java code
+		{
+			if(printArithmeticOrRelationalOperandError(operand2, t)){
+				hasError = true;
+			}else if(!operand2.equals("INTEGER")){
+				allInteger = false;
+			}
+		}
+	)*
+	//Java code
+	{
+		if(operand1!= null && !operand1.equals("INTEGER"))
+			allInteger = false;
+		if(t == null)
+			return operand1;
+		else if(printArithmeticOrRelationalOperandError(operand1, t))
+			return null;
+		else if(!hasError && allInteger && !t.image.toString().equals("/"))
+			return "INTEGER";
+		else if(!hasError)
+			return "REAL";
+		else
+			return null;
+	}
+}
+
+boolean printArithmeticOrRelationalOperandError(String varType, Token t):
 {}
 {
-	Unary() (MultOp() Unary())*
+	/*Java code*/
+	{
+		if(varType == null)
+			varType = "_NULO_";
+		if((!varType.equals("INTEGER") && !varType.equals("REAL"))){
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+". Tipo invalido para operador aritmetico.\n\tEsperado: INTEGER ou REAL\n\tEncontrado: "+varType);
+			return true;
+		}
+		return false;
+	}
 }
 
 //<Unary> = {(“+” | ”-”)} <Factor>
-void Unary():
+String Unary():
+{
+	Token t = null;
+	String typeName = null;
+}
+{
+	(t = <PLUS>| t = <MINUS>)* typeName = Factor() 
+	//Java code
+	{
+		if(t != null)
+			if(printArithmeticOrRelationalOperandError(typeName, t))
+				return null;
+		return typeName;
+	}
+}
+
+boolean printLogicOperandError(String varType, Token t):
 {}
 {
-	(<PLUS>|<MINUS>)*Factor()
+	/*Java code*/
+	{
+		if(varType == null)
+			varType = "_NULO_";
+		if(!varType.equals("INTEGER")){
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+". Tipo invalido para operador logico.\n\tEsperado: INTEGER\n\tEncontrado: "+varType);
+			return true;
+		}
+		return false;
+	}
 }
 
 //tambem modificado para remover ambiguidade entre variable e chamada de funcao
 //<Factor> = <Identifier> <ArgListSpecial> | <NumericLiteral> | <StringLiteral> | “~”<Factor> | “(” <Condition> “)” | <Variable>
-void Factor():
+String Factor():
 {
 	Token t;
 	int nparams = 0;
 	Symbol o = null;
+	String typeName = null;
+	Symbol type = null;
+	Token aux;
 }
 {
-	LOOKAHEAD(2) t = <IDENTIFIER> nparams = ArgListSpecial() 
-	//Java code
-	{
-		Symbol s = st.search(t.image.toString());
-		if(s == null){
-			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tFuncao "+t.image.toString()+" nao foi definida.");
-		}else if(!s.getTypeName().equals("FUNCTION") && nparams > 0){
-			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\t"+t.image.toString()+" nao eh uma funcao.");
-		}else if(s.getTypeName().equals("FUNCTION") && !s.getType().get("NPARAMS").equals(nparams)){
-			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tNumero de argumentos passados para a funcao "+t.image.toString()+" eh diferente do esperado.");
+	(
+		LOOKAHEAD(2) t = <IDENTIFIER> nparams = ArgListSpecial() 
+		//Java code
+		{
+			Symbol s = st.search(t.image.toString());
+			if(s == null){
+				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tFuncao "+t.image.toString()+" nao foi definida.");
+			}else if(!s.getTypeName().equals("FUNCTION") && nparams > 0){
+				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\t"+t.image.toString()+" nao eh uma funcao.");
+			}else if(s.getTypeName().equals("FUNCTION") && !s.getType().get("NPARAMS").equals(nparams)){
+				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tNumero de argumentos passados para a funcao "+t.image.toString()+" eh diferente do esperado.");
+			}else{
+				type = (Symbol)s.getType().get("RTYPE");
+				typeName = type.getId();
+			}
 		}
-	}
-	|
-	<FLOAT> |
-	<INT>	|
-	<STRING_LITERAL> |
-	<NOT>Factor() |
-	<LPAR>Condition() <RPAR> |
-	Variable(false, o)
+		|
+		<FLOAT> {typeName = "REAL";}/*Java code*/|
+		<INT>	{typeName = "INTEGER";}/*Java code*/|
+		<STRING_LITERAL> {typeName = "STRING";}/*Java code*/|
+		aux = <NOT> typeName = Factor() 
+		/*Java code*/
+		{
+			if(printLogicOperandError(typeName, aux))
+				return null;
+		}
+		
+		|
+		<LPAR>typeName = Condition() <RPAR> |
+		typeName = Variable(false, o)
+	)
+	{return typeName;}
 }
 
 //<Variable> = <Identifier> [“[” <Expression> “]”]{“.”<Variable>}
-void Variable(boolean recursion, Symbol field):
+String Variable(boolean recursion, Symbol field):
 {
 	Token t;
+	Symbol type = null;
+	String typeName = null;
+	boolean hasIndex;
 }
 {
-	t = <IDENTIFIER>
+	{hasIndex = false;}//Java code
+	t = <IDENTIFIER> (<LSQ_BRACK>Expression()<RSQ_BRACK>{hasIndex = true;}/*Java code*/)?
 	//Java code
-	{
+	{	
 		if(!recursion){//trata identificador inicial
 			Symbol s = st.search(t.image.toString());
 			field = s;
@@ -777,12 +1000,15 @@ void Variable(boolean recursion, Symbol field):
 				field = null;
 			}else{
 				field = (Symbol) s.getType().get("ELEMTYPE");//s eh do tipo Variable
+				type = field;
 			}
 
-			while(field != null && (field.getTypeName().equals("TYPE") || field.getTypeName().equals("ARRAY"))){
+			while(field != null && (field.getTypeName().equals("TYPE") 
+					|| (field.getTypeName().equals("ARRAY") && hasIndex))){
 				field = (Symbol) field.getType().get("ELEMTYPE");
 			}
 			
+			//System.out.println(s.getTypeName());
 			if(s == null){
 				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\t"+t.image.toString()+" nao foi definido.");
 			}else if(!s.getTypeName().equals("VARIABLE") && !s.getTypeName().equals("PARAM") && !s.getTypeName().equals("FUNCTION")){
@@ -793,48 +1019,86 @@ void Variable(boolean recursion, Symbol field):
 		}else{//trata campos
 			if(field == null){
 				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tImpossivel acessar o campo "+t.image.toString()+" porque um ou mais campos anteriores nao foram definidos corretamente.");
+			}else if(field.getTypeName().equals("ARRAY")){
+				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tImpossivel acessar o campo "+t.image.toString()+" a partir de um array.");
 			}else if(!field.getTypeName().equals("RECORD") || field.getType().get(t.image.toString()) == null){
 				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tCampo "+t.image.toString()+" nao foi definido.");
 				field = null;
 			}else{
 				field = (Symbol) field.getType().get(t.image.toString());
-					
-				while(field != null && (field.getTypeName().equals("TYPE") || field.getTypeName().equals("ARRAY"))){
+				type = field;
+				while(field != null && (field.getTypeName().equals("TYPE") 
+										|| (field.getTypeName().equals("ARRAY") && hasIndex))){
 					field = (Symbol) field.getType().get("ELEMTYPE");
 				}
 			}
 		}
 	}
 	
-	(<LSQ_BRACK>Expression()<RSQ_BRACK>)?(LOOKAHEAD(2)<DOT>Variable(true, field))*
+	(LOOKAHEAD(2)<DOT>typeName = Variable(true, field))*
+	{
+		if(typeName == null){
+			if(type == null || type.getType() == null)
+				typeName = "_NULO_";
+			else{
+				typeName = type.getTypeName();
+				if(typeName.equals("TYPE") && hasIndex){
+					type = (Symbol)type.getType().get("ELEMTYPE");
+					typeName = type.getTypeName();
+				}
+				
+				if(typeName.equals("FUNCTION"))
+					type = ((Symbol)type.getType().get("RTYPE"));
+				else if(typeName.equals("ARRAY") && hasIndex){
+					type = ((Symbol)type.getType().get("ELEMTYPE"));
+				}
+				else if(typeName.equals("VARIABLE"))
+					type = ((Symbol)type.getType().get("ELEMTYPE"));
+				
+				typeName = type.getId();
+			}
+			//System.out.println("line: "+t.beginLine+", tipo: "+typeName);			
+		}
+		return typeName;
+	}
 }
 
 //<RelOp> = “=” | “!” | “>” | “<” | “<=” | “>=”
-void RelOp():
-{}
+Token RelOp():
 {
-	<EQUAL> | <DIFF> | LOOKAHEAD(2) <GTE> | LOOKAHEAD(2)<LTE> | <GT> | <LT>
+	Token t;
+}
+{
+	(t = <EQUAL> | t = <DIFF> | LOOKAHEAD(2) t = <GTE> | LOOKAHEAD(2)t = <LTE> | t = <GT> | t = <LT>)
+	
+	{return t;}//Java code
 }
 
 //<AddOp> = “+” | “-”
-void AddOp():
-{}
+Token AddOp():
 {
-	<PLUS> | <MINUS>
+	Token t;
+}
+{
+	(t = <PLUS> | t = <MINUS>)
+	{return t;}//Java code
 }
 
 //<MultOp> = “*” | “/”
-void MultOp():
-{}
+Token MultOp():
 {
-	<MUL> | <DIV>
+	Token t;
+}
+{
+	(t = <MUL> | t = <DIV>)
+	{return t;}//Java code
 }
 
 //<Argument> = <Condition>
-void Argument():
-{}
+String Argument():
+{String typeName;}
 {
-	Condition()
+	typeName = Condition() {return typeName;}//Java code
 }
 	
 /*void start():
