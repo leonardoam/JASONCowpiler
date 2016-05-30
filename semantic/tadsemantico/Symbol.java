@@ -16,7 +16,7 @@ public class Symbol {
 
     public Symbol(String id, String typeName) {
         this.typeName = typeName.toUpperCase();
-        this.id = id;
+        this.id = id.toUpperCase();
         
         switch (this.typeName) {
             case "INTEGER":

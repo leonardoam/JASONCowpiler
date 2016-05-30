@@ -4,7 +4,7 @@ package tadsemantico;
  *
  * @author darlan
  */
-class ParamType implements Type {
+public class ParamType implements Type {
     private String tClass = null;
     private Symbol elemType = null;
     private Symbol param = null;//equivalent to address on a HashTable
