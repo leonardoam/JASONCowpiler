@@ -18,15 +18,15 @@ class ArrayType implements Type {
         switch(field.toUpperCase()){
             case "SIZE":
                 this.size = (Integer) value;
-                if(elemType != null && elemType.getType() != null && elemType.getType().get("nbytes") != null && size != null)
-                    this.nbytes = ((Integer) elemType.getType().get("nbytes"))*this.size;
+                if(elemType != null && elemType.getType() != null && elemType.getType().get("_nbytes_") != null && size != null)
+                    this.nbytes = ((Integer) elemType.getType().get("_nbytes_"))*this.size;
                 else
                     this.nbytes = 0;
                 return true;
             case "ELEMTYPE":
                 this.elemType = (Symbol) value;
-                if(elemType != null && elemType.getType() != null && elemType.getType().get("nbytes") != null && size != null)
-                    this.nbytes = ((Integer) elemType.getType().get("nbytes"))*this.size;
+                if(elemType != null && elemType.getType() != null && elemType.getType().get("_nbytes_") != null && size != null)
+                    this.nbytes = ((Integer) elemType.getType().get("_nbytes_"))*this.size;
                 else
                     this.nbytes = 0;
                 return true;
@@ -41,7 +41,7 @@ class ArrayType implements Type {
                 return this.size;
             case "ELEMTYPE":
                 return this.elemType;
-            case "NBYTES":
+            case "_NBYTES_":
                 return this.nbytes;
             default:
                 return null;

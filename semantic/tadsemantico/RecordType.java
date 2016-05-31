@@ -25,8 +25,8 @@ public class RecordType implements Type {
             this.nbytes = 0;
         }else{
             Type t = ((Symbol)value).getType();
-            if(t.get("nbytes") != null)
-                this.nbytes = ((this.nbytes == null)? (Integer)t.get("nbytes") : this.nbytes + (Integer)t.get("nbytes"));
+            if(t.get("_nbytes_") != null)
+                this.nbytes = ((this.nbytes == null)? (Integer)t.get("_nbytes_") : this.nbytes + (Integer)t.get("_nbytes_"));
         }
         return true;
     }
@@ -35,8 +35,10 @@ public class RecordType implements Type {
     public Object get(String field) {
         field = field.toUpperCase();
         switch(field){
-            case "NBYTES":
+            case "_NBYTES_":
                 return this.nbytes;
+            case "_FIELDS_":
+                return this.fields.keySet();
             default:
                 if(!fields.containsKey(field))
                     return null;

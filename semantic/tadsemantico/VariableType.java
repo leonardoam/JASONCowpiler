@@ -31,7 +31,7 @@ class VariableType implements Type {
         switch(field.toUpperCase()){
             case "ELEMTYPE":
                 return this.elemType;
-            case "NBYTES":
+            case "_NBYTES_":
                 return this.nbytes;
             default:
                 return null;

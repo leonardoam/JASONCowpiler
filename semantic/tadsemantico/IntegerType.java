@@ -18,7 +18,7 @@ public class IntegerType implements Type {
 
     @Override
     public Object get(String field) {
-        if(field.toUpperCase().equals("NBYTES")){
+        if(field.toUpperCase().equals("_NBYTES_")){
             return this.nbytes;
         }else{
             return null;

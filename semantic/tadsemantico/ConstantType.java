@@ -24,7 +24,7 @@ class ConstantType implements Type {
                 if(elemType == null || elemType.getType() == null)
                     this.nbytes = 0;
                 else
-                    this.nbytes = (Integer) elemType.getType().get("nbytes");
+                    this.nbytes = (Integer) elemType.getType().get("_nbytes_");
                 return true;
         }
         return false;
@@ -37,7 +37,7 @@ class ConstantType implements Type {
                 return this.value;
             case "ELEMTYPE":
                 return this.elemType;
-            case "NBYTES":
+            case "_NBYTES_":
                 return this.nbytes;
             default:
                 return null;

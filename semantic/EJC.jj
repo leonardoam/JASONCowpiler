@@ -4,14 +4,14 @@ options{IGNORE_CASE = true;/*DEBUG_PARSER = true;*/}
 PARSER_BEGIN(EJC)
 import java.io.*;
 import tadsemantico.*;
-import java.util.ArrayList;
+import java.util.*;
 
 public class EJC{
 	public final static SymbolTable st = new SymbolTable();
 	public static int array_counter = 0;
 	public static int record_counter = 0;
 	public static final int MAX_ID_LENGTH = 128;
-	public static final int MAX_STR_LENGTH = 256;
+	public static final int MAX_STR_LENGTH = 258;//2 a mais para as aspas
 	public static final int MAX_NUM_SIZE = 9;
 	
     public static void main(String[] args) throws ParseException, TokenMgrError{
@@ -246,7 +246,7 @@ boolean ArraySpecification(Token typeToken):
 			st.addSymbol(arrayName, "ARRAY");
 			Symbol s = st.search(t.image.toString());
 			if(s == null || (!s.getTypeName().equals("TYPE") && !s.getTypeName().equals("REAL") && !s.getTypeName().equals("STRING") && !s.getTypeName().equals("INTEGER"))){
-				//System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tTipo "+t.image.toString()+" nao definido.");
+				//System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tTipo "+t.image.toString()+" nao declarado.");
 				isCorrect = false;
 			}else{ 
 				st.search(arrayName).getType().set("ELEMTYPE", s);
@@ -267,7 +267,7 @@ boolean ArraySpecification(Token typeToken):
 		st.search(arrayName).getType().set("size", size);
 		boolean result = st.isSet(typeToken.image.toString());
 		if(isCorrect && result){
-			System.out.println("Erro semantico na linha "+typeToken.beginLine+", coluna "+typeToken.beginColumn+".\n\tTipo "+typeToken.image.toString()+" ja foi definido nesse contexto.");
+			System.out.println("Erro semantico na linha "+typeToken.beginLine+", coluna "+typeToken.beginColumn+".\n\tTipo "+typeToken.image.toString()+" ja foi declarado nesse contexto.");
 		}else if(t.image.toString().length() > MAX_NUM_SIZE){
 			isCorrect = false;
 		}else if(isCorrect && typeToken.image.toString().length() <= MAX_ID_LENGTH){
@@ -299,7 +299,7 @@ boolean RecordSpecification(Token typeToken):
 			record_counter++;
 			boolean result = st.isSet(typeName);
 			if(isCorrect && result){
-				System.out.println("Erro semantico na linha "+typeToken.beginLine+", coluna "+typeToken.beginColumn+".\n\tTipo "+typeToken.image.toString()+" ja foi definido nesse contexto.");
+				System.out.println("Erro semantico na linha "+typeToken.beginLine+", coluna "+typeToken.beginColumn+".\n\tTipo "+typeToken.image.toString()+" ja foi declarado nesse contexto.");
 			}else if(isCorrect && typeName.length() <= MAX_ID_LENGTH){
 				st.addSymbol(typeName, "TYPE");
 				st.search(typeName).getType().set("ELEMTYPE", st.search(recordName));
@@ -361,7 +361,7 @@ Token DataType():
 	{
 		Symbol dt = st.search(t.image.toString());
 		if(dt == null || (dt != null && !dt.getTypeName().equals("TYPE"))){
-			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tTipo "+t.image.toString()+" nao esta definido.");
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tTipo "+t.image.toString()+" nao esta declarado.");
 		}
 	}
 	| t = <STRING>)
@@ -387,7 +387,7 @@ boolean addRecordField(Token datatype, Token identifier, boolean comingFromRecor
 		}else if(st.isSet(identifier.image.toString())){
 			System.out.println("Erro semantico na linha "+identifier.beginLine+", coluna "+identifier.beginColumn+".\n\tIdentificador "+identifier.image.toString()+" duplicado.");
 		}else if(identifier.image.toString().length() > MAX_ID_LENGTH){
-			System.out.println("Erro semantico na linha "+identifier.beginLine+", coluna "+identifier.beginColumn+".\n\tErro na definicao de "+identifier.image.toString()+".");
+			System.out.println("Erro semantico na linha "+identifier.beginLine+", coluna "+identifier.beginColumn+".\n\tErro na declaracao de "+identifier.image.toString()+".");
 		}else{
 			st.addSymbol(identifier.image.toString(), "VARIABLE");
 			st.search(identifier.image.toString()).getType().set("ELEMTYPE", st.search(datatype.image.toString()));
@@ -461,9 +461,9 @@ String ProcHeader():
 	{
 		String procName = t.image.toString();
 		if(procName.length() > MAX_ID_LENGTH){
-			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tErro na definicao do procedimento "+t.image.toString()+".");
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tErro na declaracao do procedimento "+t.image.toString()+".");
 		}else if(!st.addSymbol(procName, "PROCEDURE")){
-			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tIdentificador "+t.image.toString()+" ja foi definido nesse contexto.");
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tIdentificador "+t.image.toString()+" ja foi declarado nesse contexto.");
 		}
 		st.addLevel();
 		return procName;
@@ -529,9 +529,9 @@ int ParamDecl(int nparams, String subprogramName):
 	//Java code
 	{
 		if(identifier.image.toString().length() > MAX_ID_LENGTH){
-			System.out.println("Erro semantico na linha "+identifier.beginLine+", coluna "+identifier.beginColumn+".\n\tErro na definicao do parametro "+identifier.image.toString()+".");
+			System.out.println("Erro semantico na linha "+identifier.beginLine+", coluna "+identifier.beginColumn+".\n\tErro na declaracao do parametro "+identifier.image.toString()+".");
 		}else if(!st.addSymbol(identifier.image.toString(), "PARAM")){
-			System.out.println("Erro semantico na linha "+identifier.beginLine+", coluna "+identifier.beginColumn+".\n\tIdentificador "+identifier.image.toString()+" ja foi definido nesse contexto.");
+			System.out.println("Erro semantico na linha "+identifier.beginLine+", coluna "+identifier.beginColumn+".\n\tIdentificador "+identifier.image.toString()+" ja foi declarado nesse contexto.");
 		}else{
 			Symbol param = st.search(identifier.image.toString());
 			Type t = param.getType();
@@ -568,9 +568,9 @@ String[] FunctionHeader():
 	{
 		String funcName = t.image.toString();
 		if(funcName.length() > MAX_ID_LENGTH){
-			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tErro na definicao da funcao "+t.image.toString()+".");	
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tErro na declaracao da funcao "+t.image.toString()+".");	
 		}else if(!st.addSymbol(funcName, "FUNCTION")){
-			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tIdentificador "+t.image.toString()+" ja foi definido nesse contexto.");
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tIdentificador "+t.image.toString()+" ja foi declarado nesse contexto.");
 		}else{
 			st.search(funcName).getType().set("RTYPE", st.search(returnType.image.toString()));
 		}
@@ -629,32 +629,80 @@ void printConditionError(String condType, Token t):
 	}
 }
 
+boolean checkStructuralCompatibilityError(String expected, String real):
+{}
+{
+	//Java code
+	{
+		Symbol s1 = st.search(expected);
+		Symbol s2 = st.search(real);
+		if(s1 == null || s1.getType() == null || s2 == null || s2.getType() == null)//error if any is null
+			return true;
+		if(!s1.getTypeName().equals("TYPE") && !s2.getTypeName().equals("TYPE"))//if both are of basic type, return true if they are different and false otherwise
+			return !s1.getId().equals(s2.getId());
+		if(s1.getTypeName().equals("TYPE") && s2.getTypeName().equals("TYPE")){//if both are user-defined types
+			Symbol elem1 = (Symbol)s1.getType().get("ELEMTYPE");
+			Symbol elem2 = (Symbol)s2.getType().get("ELEMTYPE");
+			
+			if(!elem1.getTypeName().equals(elem2.getTypeName()))//error if one is ARRAY and other is RECORD
+				return true;
+				
+			//if both are array and have the same size, recursion
+			if(elem1.getTypeName().equals("ARRAY") && elem1.getType().get("SIZE").equals(elem2.getType().get("SIZE"))){
+				return checkStructuralCompatibilityError(((Symbol)elem1.getType().get("ELEMTYPE")).getId(), ((Symbol)elem2.getType().get("ELEMTYPE")).getId());
+			}
+			//if both are record and have the same size, recursion
+
+			if(elem1.getTypeName().equals("RECORD")){
+				RecordType rec1 = (RecordType) elem1.getType();
+				boolean error = false;
+				for(String field : (Set<String>)rec1.get("_FIELDS_")){
+					if(elem2.getType().get(field) == null)//if second record doesn't have a field that's in the first
+						return true;
+					String t1 = ((Symbol)rec1.get(field)).getId();//getting field's type name for record 1
+					String t2 = ((Symbol)elem2.getType().get(field)).getId();//getting field's type name for record 2
+					error = error || checkStructuralCompatibilityError(t1, t2);
+				}
+				
+				return error;
+			}else{
+				return true;
+			}
+		}
+			
+		return true;//error if one is basic type and other is user type
+	}
+}
+
 boolean checkCompatibilityError(String expected, String real):
 {}
 {
 	//Java code
 	{
-	boolean error = false;
-	
-	if(expected == null)
-expected = "_NULO_";
-	if(real == null)
-real = "_NULO_";
-	
-	if(!expected.equals(real)){
-		if(expected.equals("INTEGER")){
-			if(!real.equals("REAL"))
-				error = true;
-		}else if(expected.equals("REAL")){
-			if(!real.equals("INTEGER"))
-				error = true;
-		}else{ 
-			error = true;
+		boolean error = false;
+		
+		if(expected == null)
+			expected = "_NULO_";
+		if(real == null)
+			real = "_NULO_";
+		
+		if(!expected.equals(real)){
+			if(expected.equals("INTEGER")){
+				if(!real.equals("REAL"))
+					error = true;
+			}else if(expected.equals("REAL")){
+				if(!real.equals("INTEGER"))
+					error = true;
+			}else{
+				if(expected.equals("STRING") || real.equals("STRING"))
+					error = true;
+				else if(!expected.equals("_NULO_") && !real.equals("_NULO_"))
+					error = checkStructuralCompatibilityError(expected, real);
+			}
 		}
+		
+		return error;
 	}
-	
-	return error;
-}
 }
 
 void printSetError(String varType, String exprType, Token t):
@@ -665,7 +713,7 @@ void printSetError(String varType, String exprType, Token t):
 	boolean error = checkCompatibilityError(varType, exprType);
 	
 	if(error){
-		System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tTipo "+exprType+" incompativel com tipo "+varType);
+		System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tTipo "+exprType+" nao pode ser convertido para tipo "+varType);
 	}
 }
 }
@@ -696,7 +744,7 @@ void Statement():
 	{
 		Symbol s = st.search(t.image.toString());
 		if(s == null){
-			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tProcedimento "+t.image.toString()+" nao foi definido.");
+			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tProcedimento "+t.image.toString()+" nao foi declarado.");
 		}else if(!s.getTypeName().equals("PROCEDURE")){
 			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\t"+t.image.toString()+" nao eh um procedimento.");
 		}else if(s.getType().get("NPARAMS") == null || !s.getType().get("NPARAMS").equals(""+nparams)){
@@ -721,7 +769,7 @@ void printReturnError(String returned, String expected, Token t):
 	boolean error = checkCompatibilityError(expected, returned);
 	
 	if(error){
-		System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.endColumn+".\n\tTipo "+returned+" incompativel com tipo "+expected);
+		System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.endColumn+".\n\tTipo "+returned+" nao pode ser convertido para tipo "+expected);
 	}
 }
 
@@ -782,7 +830,7 @@ void printParamError(Token t, int paramIndex, String type):
 }
 }else{
 	if(p.get("ELEMTYPE") != null && checkCompatibilityError(((Symbol)p.get("ELEMTYPE")).getId(), type)){
-		System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tParametro "+(paramIndex+1)+" invalido.\n\tTipo "+type+" incompativel com tipo "+((Symbol)p.get("ELEMTYPE")).getId());
+		System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tParametro "+(paramIndex+1)+" invalido.\n\tTipo "+type+" nao pode ser convertido para tipo "+((Symbol)p.get("ELEMTYPE")).getId());
 }
 }
 }
@@ -1057,7 +1105,7 @@ String Factor():
 		{
 			Symbol s = st.search(t.image.toString());
 			if(s == null){
-				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tFuncao "+t.image.toString()+" nao foi definida.");
+				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tFuncao "+t.image.toString()+" nao foi declarada.");
 			}else if(!s.getTypeName().equals("FUNCTION") && nparams > 0){
 				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\t"+t.image.toString()+" nao eh uma funcao.");
 			}else if(s.getTypeName().equals("FUNCTION") && !s.getType().get("NPARAMS").equals(nparams)){
@@ -1116,7 +1164,7 @@ String Variable(boolean recursion, Symbol field):
 			
 			//System.out.println(s.getTypeName());
 			if(s == null){
-				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\t"+t.image.toString()+" nao foi definido.");
+				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\t"+t.image.toString()+" nao foi declarado.");
 			}else if(!s.getTypeName().equals("VARIABLE") && !s.getTypeName().equals("PARAM") && !s.getTypeName().equals("FUNCTION")){
 				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\t"+t.image.toString()+" nao pode ser usado nesse contexto.\n\tEsperado:\n\tFuncao, parametro ou variavel.");
 			}else if(s.getTypeName().equals("FUNCTION") && !s.getType().get("NPARAMS").equals(0)){
@@ -1124,11 +1172,11 @@ String Variable(boolean recursion, Symbol field):
 			}
 		}else{//trata campos
 			if(field == null){
-				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tImpossivel acessar o campo "+t.image.toString()+" porque um ou mais campos anteriores nao foram definidos corretamente.");
+				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tImpossivel acessar o campo "+t.image.toString()+" porque um ou mais campos anteriores nao foram declarados corretamente.");
 			}else if(field.getTypeName().equals("ARRAY")){
 				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tImpossivel acessar o campo "+t.image.toString()+" a partir de um array.");
 			}else if(!field.getTypeName().equals("RECORD") || field.getType().get(t.image.toString()) == null){
-				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tCampo "+t.image.toString()+" nao foi definido.");
+				System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tCampo "+t.image.toString()+" nao foi declarado.");
 				field = null;
 			}else{
 				field = (Symbol) field.getType().get(t.image.toString());
