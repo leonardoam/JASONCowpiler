@@ -747,7 +747,7 @@ void Statement():
 			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tProcedimento "+t.image.toString()+" nao foi declarado.");
 		}else if(!s.getTypeName().equals("PROCEDURE")){
 			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\t"+t.image.toString()+" nao eh um procedimento.");
-		}else if(s.getType().get("NPARAMS") == null || !s.getType().get("NPARAMS").equals(""+nparams)){
+		}else if(s.getType().get("NPARAMS") == null || !s.getType().get("NPARAMS").equals(nparams)){
 			System.out.println("Erro semantico na linha "+t.beginLine+", coluna "+t.beginColumn+".\n\tNumero de argumentos passados para o procedimento "+t.image.toString()+" eh diferente do esperado.");
 		}
 	}
