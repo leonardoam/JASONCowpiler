@@ -17,6 +17,21 @@ public class RecordType implements Type {
     public boolean set(String field, Object value) {
         field = field.toUpperCase();
        
+        if(field.toUpperCase().equals("_ADDRESS_")){
+            if(value == null) return false;
+            
+            String[] str = ((String) value).split(",");
+            int level = Integer.parseInt(str[0]);
+            int offset = Integer.parseInt(str[1]);
+            
+            for(Object key : fields.keySet()){
+                ((Symbol)fields.get(key)).getType().set("_ADDRESS_", level+","+offset);
+                offset+= (Integer)((Symbol)fields.get(key)).getType().get("_NBYTES_");
+            }
+            
+            return true;
+        }
+        
         if(fields.containsKey((String) field)){
             return false;
         }

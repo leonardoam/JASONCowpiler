@@ -5,7 +5,7 @@ package tadsemantico;
  * @author emanuel
  */
 public class IntegerType implements Type {
-    private final int nbytes = 4;
+    private final int nbytes = 1;
 
     public IntegerType() {
         

@@ -9,7 +9,7 @@ import java.util.ArrayList;
 class ProcedureType implements Type {
     private Integer nparams = null;
     private ArrayList<Symbol> params = new ArrayList<>();
-    
+    private Integer code_entry = null;
 
     public ProcedureType() {
         
@@ -25,6 +25,11 @@ class ProcedureType implements Type {
             case "PARAM":
                 this.params.add((Symbol)value);
                 return true;
+            case "ENTRY":
+                if(value != null){
+                    this.code_entry = (Integer) value;
+                    return true;
+                }
         }
         return false;
     }
@@ -36,6 +41,8 @@ class ProcedureType implements Type {
                 return this.nparams;
             case "PARAMS":
                 return this.params;
+            case "ENTRY":
+                return this.code_entry;
             default:
                 return null;
         }

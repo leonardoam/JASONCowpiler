@@ -5,7 +5,7 @@ package tadsemantico;
  * @author darlan
  */
 public class StringType implements Type {
-    private final int nbytes = 256;
+    private final int nbytes = 1;
 
     public StringType() {
         

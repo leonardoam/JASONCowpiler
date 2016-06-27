@@ -8,6 +8,7 @@ public class ParamType implements Type {
     private String tClass = null;
     private Symbol elemType = null;
     private Symbol param = null;//equivalent to address on a HashTable
+    private String address = null;
 
     public ParamType() {
         
@@ -29,6 +30,11 @@ public class ParamType implements Type {
             case "PARAM":
                 this.param = (Symbol) value;
                 return true;
+            case "_ADDRESS_":
+                if(value != null){
+                    this.address = (String) value;
+                    return true;
+                }
         }
         return false;
     }
@@ -42,6 +48,8 @@ public class ParamType implements Type {
                 return this.elemType;
             case "PARAM":
                 return this.param;
+            case "_ADDRESS_":
+                return this.address;
             default:
                 return null;
         }
